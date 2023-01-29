@@ -5,206 +5,91 @@
     </head>
 
     <style>
-        body, html {
-            border: 0;
+        body {
+            height: 100vh;
+            width: 100wh;
             margin: 0;
             padding: 0;
         }
 
+        #container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+        }
+
+        #rem {
+            height: 90%;
+            width: 95%px;
+            border: 1px solid #000000;
+        }
+
         #image {
             border: 1px solid #000000;
-            display: block;
-            position: absolute;
+            display: inline-block;
+            position: relative;
         }
 
         #control {
             border: 1px solid #000000;
-            display: block;
-            position: absolute;
-            left: 0px;
-            bottom: 0px;
-            width: calc(100% - 2px);
+            display: inline-block;
+            position: relative;
         }
 
         #register {
             border: 1px solid #000000;
-            display: block;
-            position: absolute;
-            right: 0px;
+            display: inline-block;
+            position: relative;
         }
 
     </style>
 
     <body>
+        <div id="container">
+            <div id="rem">
+                <div id="image">
+                    <canvas id="canvas" height="256" width="256"></canvas>
+                </div>
+
+                <div id="register">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Value</th>
+                                <th>Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="register-list">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="control">
+                    <button id="connect-button" onclick="onConnectButtonClick()">Connect</button>
+                    <button id="init-button" onclick="onInitButtonClick()" disabled>Init</button>
+                    <button id="scan-button" onclick="onScanButtonClick()" disabled>Scan</button>
+                    <button id="abort-button" onclick="onAbortButtonClick()" disabled>Abort</button>
+                    
+                </div>
+
+                <div id="progress">
+                    <label for="progress-bar">Progress:</label>
+                    <progress id="progress-bar" max="100" value="0"></progress>
+                </div>
+                
+                <div id="time">
+                    
+                </div>
+            </div>
+        </div>
+
         <!--<script src="https://cdn.jsdelivr.net/gh/makeabilitylab/p5js/_libraries/serial.js"></script>-->
         <script src="js/serial.js"></script>
-        <script src="js/cmd.js"></script>
-
-        <div id="image">
-            <canvas id="canvas" height="256" width="256"></canvas>
-        </div>
-
-        <div id="register">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Name</th>
-                        <th>Value</th>
-                        <th>Unit</th>
-                    </tr>
-                </thead>
-                <tbody id="register-list">
-                </tbody>
-            </table>
-        </div>
-
-        <div id="control">
-            <button id="connect-button" onclick="onConnectButtonClick()">Connect</button>
-            <button id="init-button" onclick="onInitButtonClick()" disabled>Init</button>
-            <button id="scan-button" onclick="onScanButtonClick()" disabled>Scan</button>
-            <button id="abort-button" onclick="onAbortButtonClick()" disabled>Abort</button>
-            
-        </div>
-
-        <script>
-            const rem = new REMinterface();
-
-            rem.on(REMevents.CONNECTION_OPENED, onConnectionOpened);
-            rem.on(REMevents.CONNECTION_CLOSED, onConnectionClosed);
-            rem.on(REMevents.REGISTER_CHANGE, onRegisterChange);
-            rem.on(REMevents.IMAGE_RECEIVED, onImageReceived);
-
-            window.addEventListener("load", (event) => {
-                var register = document.getElementById("register-list");
-                
-                for (var i = 0; i < 32; ++i)
-                {
-                    if (REMregister[i].use == true)
-                    {
-                        var row = document.createElement("tr");                                
-                    
-                        var col = document.createElement("td");
-                        col.innerHTML = i;
-                        row.appendChild(col);
-
-                        col = document.createElement("td");
-                        col.innerHTML = REMregister[i].name;
-                        row.appendChild(col);
-
-                        col = document.createElement("td");
-                        var input = document.createElement("input");
-                        
-                        input.type = "number";
-                        input.id = "register-" + i;
-                        input.readOnly = REMregister[i].readonly && REMregister[i].readonly == true;
-                        input.onchange = onRegisterChangeUser;
-
-                        col.appendChild(input);
-                        row.appendChild(col);
-
-                        col = document.createElement("td");
-                        if (REMregister[i].unit)
-                            col.innerHTML = REMregister[i].unit;
-
-                        row.appendChild(col);
-                    
-                        register.appendChild(row);
-                    }
-                }
-            });
-
-            async function onConnectButtonClick() {
-                await rem.connect();
-            }
-
-            async function onRegisterChangeUser(event)
-            {
-                var nr = event.target.id.split("-")[1];
-                var val = event.target.value;
-                
-                if (REMregister[nr].mult)
-                    val = Math.round(val / REMregister[nr].mult);
-                else if (REMregister[nr].div)
-                    val = Math.round(val * REMregister[nr].div);
-
-                await rem.writeRegister(nr, val);
-            }
-
-            function onRegisterChange(eventSender, data)
-            {
-                var register = document.getElementById("register-" + data.nr);
-
-                if (register)
-                {
-                    if (REMregister[data.nr].mult)
-                        register.value = (data.val * REMregister[data.nr].mult).toFixed(3);
-                    else if (REMregister[data.nr].div)
-                        register.value = (data.val / REMregister[data.nr].div).toFixed(3);
-                    else
-                        register.value = data.val;
-                }
-            }
-
-            function onConnectionOpened(eventSender)
-            {
-                document.getElementById("connect-button").disabled = true;
-                document.getElementById("scan-button").disabled = false;
-                document.getElementById("init-button").disabled = false;
-            }
-
-            function onConnectionClosed(eventSender)
-            {
-                document.getElementById("scan-button").disabled = true;
-                document.getElementById("init-button").disabled = true;
-                document.getElementById("connect-button").disabled = false;
-            }
-
-            function onImageReceived(eventSender, data)
-            {
-                document.getElementById("abort-button").disabled = true;
-                document.getElementById("scan-button").disabled = false;
-
-                let dataGray = new Uint8Array(data.w*data.h*4);
-                moveGray(data.image, dataGray, data.w, data.h);
-                
-                var canvas = document.getElementById("canvas");
-                canvas.width = data.w;
-                canvas.height = data.h;
-
-                var ctx = canvas.getContext("2d");
-                var img = ctx.getImageData(0, 0, data.w, data.h);
-                
-                img.data.set(dataGray);
-                ctx.putImageData(img, 0, 0);
-            }
-
-            async function onInitButtonClick() {
-                await rem.init();
-            }
-
-            async function onScanButtonClick() {
-                document.getElementById("scan-button").disabled = true;
-                document.getElementById("abort-button").disabled = false;
-
-                await rem.scan();
-            }
-
-            async function onAbortButtonClick() {
-                await rem.abort();
-
-                document.getElementById("abort-button").disabled = true;
-                document.getElementById("scan-button").disabled = false;
-            }
-
-            function moveGray(src, dest, width, height) {
-                const destW = new Uint32Array(dest.buffer);
-                const alpha = 0xFF000000;
-                for (var i = 0; i < width * height; i++) {
-                    const g = src[i];
-                    destW[i] = alpha + (g << 16) + (g << 8) + g;
-                }    
-            }
-        </script>
+        <script src="js/rem.js"></script>
+        <script src="js/gui.js"></script>
     </body>
 </html>

@@ -1,6 +1,20 @@
 const REMregister = [
-    { use: true,  name: "Configuration", display: "checkbox" },
-    { use: false },
+    { use: true,  name: "Configuration", display: "checkbox", bits: [
+        {id: 0, name: "Channel 1" },
+        {id: 1, name: "8-Bit" },
+        {id: 2, name: "Test Image" }
+    ] },
+    { use: true, name: "Test Img. Mode", display: "dropdown", options: [
+        {id: 0, name: "RC Lo/Lo" },
+        {id: 1, name: "RC Lo/Hi" },
+        {id: 2, name: "RC Hi/Lo" },
+        {id: 3, name: "RC Hi/Hi" },
+        {id: 4, name: "XY Lo/Lo" },
+        {id: 5, name: "XY Lo/Hi" },
+        {id: 6, name: "XY Hi/Lo" },
+        {id: 7, name: "XY Hi/Hi" },
+        {id: 8, name: "0x55AA" }
+    ] },
     { use: false },
     { use: false },
     { use: false },
@@ -44,6 +58,7 @@ const REMevents = Object.freeze({
     CONNECTION_OPENED: Symbol("Connection opened"),
     CONNECTION_CLOSED: Symbol("Connection closed"),
     IMAGE_RECEIVED: Symbol("New Image received"),
+    CHUNK_RECEIVED: Symbol("New Chunk received"),
     REGISTER_CHANGE: Symbol("Register Value changed")
 })
 
@@ -56,6 +71,7 @@ class REMinterface {
             [REMevents.CONNECTION_OPENED,
             REMevents.CONNECTION_CLOSED,
             REMevents.IMAGE_RECEIVED,
+            REMevents.CHUNK_RECEIVED,
             REMevents.REGISTER_CHANGE]);
   
         this.serial = new Serial();
@@ -72,7 +88,8 @@ class REMinterface {
 
         this.register = [];
 
-        this.image = [];
+        this.chunk = null;
+        this.image = null;
         this.count = 0;
     }
 
@@ -238,18 +255,33 @@ class REMinterface {
             this.rx_buffer = responses.pop();
             this.response_buffer = this.response_buffer.concat(responses);
         } else {
+            //this.chunk = newData;
+
             var tmp = new Uint8Array(this.image.length + newData.length);
+            
             tmp.set(this.image);
             tmp.set(newData, this.image.length);
+            
             this.image = tmp;
             this.count += newData.length;
             
+            this.onChunkReceived();
+
             if (this.count >= this.register[10] * this.register[11])
             {
                 this.mode = "cmd";
                 this.onImageReceived();
             }
         }
+    }
+
+    onChunkReceived()
+    {
+        this.fireEvent(REMevents.CHUNK_RECEIVED, {
+            h: this.register[11],
+            w: this.register[10],
+            image: this.image
+        });
     }
 
     onImageReceived()
