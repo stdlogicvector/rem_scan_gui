@@ -21,6 +21,8 @@
 
 
 const SerialEvents = Object.freeze({
+    PORT_DISCONNECTED: Symbol("Port disconnected"),
+    PORT_CONNECTED: Symbol("Port connected"),
     CONNECTION_OPENED: Symbol("Connection opened"),
     CONNECTION_CLOSED: Symbol("Connection closed"),
     DATA_RECEIVED: Symbol("New data received"),
@@ -36,26 +38,29 @@ const SerialEvents = Object.freeze({
       this.dataReader = null;
       this.keepReading = false;
   
-      this.readableDataStreamClosed = null;
+      //this.readableDataStreamClosed = null;
       this.writableTextStreamClosed = null;
   
       // event handling https://stackoverflow.com/a/56612753
       this.events = new Map();
   
-      this.knownEvents = new Set(
-        [SerialEvents.CONNECTION_OPENED,
+      this.knownEvents = new Set([
+        SerialEvents.PORT_CONNECTED,
+        SerialEvents.PORT_DISCONNECTED,
+        SerialEvents.CONNECTION_OPENED,
         SerialEvents.CONNECTION_CLOSED,
         SerialEvents.DATA_RECEIVED,
-        SerialEvents.ERROR_OCCURRED]);
+        SerialEvents.ERROR_OCCURRED
+      ]);
   
       if (navigator.serial) {
         navigator.serial.addEventListener("connect", (event) => {
-          console.log("navigator.serial event: connected!");
+          this.fireEvent(SerialEvents.PORT_CONNECTED);
         });
   
         navigator.serial.addEventListener("disconnect", (event) => {
-          console.log("navigator.serial event: disconnected!");
           this.close();
+          this.fireEvent(SerialEvents.PORT_DISCONNECTED);
         });
       }
     }
@@ -123,9 +128,9 @@ const SerialEvents = Object.freeze({
         this.keepReading = false;
         this.dataReader.cancel();
   
-        await this.readableDataStreamClosed.catch(() => { /* Ignore the error */ });
+        //await this.readableDataStreamClosed.catch(() => { /* Ignore the error */ });
         this.dataReader = null;
-        this.readableDataStreamClosed = null;
+        //this.readableDataStreamClosed = null;
       }
   
       if (this.textWriter) {
@@ -236,7 +241,7 @@ const SerialEvents = Object.freeze({
     
         // Setup serial input stream as text
         this.keepReading = true;
-        this.readableDataStreamClosed = this.serialPort.readable;
+        //this.readableDataStreamClosed = this.serialPort.readable;
         this.dataReader = this.serialPort.readable.getReader();
 
         this.fireEvent(SerialEvents.CONNECTION_OPENED);
@@ -269,6 +274,12 @@ const SerialEvents = Object.freeze({
         } catch (error) {
           // handle non-fatal error
           this.fireEvent(SerialEvents.ERROR_OCCURRED, error);
+
+          if (error.name == "BreakError")
+          {
+            this.keepReading = false;
+            this.close();
+          }
         }
         finally {
           // see https://reillyeon.github.io/serial/#close-method

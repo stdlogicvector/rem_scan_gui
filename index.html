@@ -1,59 +1,41 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8" />
+		<meta name="description" content="Stundenpläne erstellen" />
+		<meta name="author" content="kw" />
+		<meta name="theme-color" content="#56fcbf" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+		/>
+
         <title>REM Scan</title>
+
+        <link rel="stylesheet" href="./css/style.css" />
     </head>
-
-    <style>
-        body {
-            height: 100vh;
-            width: 100wh;
-            margin: 0;
-            padding: 0;
-        }
-
-        #container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            min-height: 100vh;
-        }
-
-        #rem {
-            height: 90%;
-            width: 95%px;
-            border: 1px solid #000000;
-        }
-
-        #image {
-            border: 1px solid #000000;
-            display: inline-block;
-            position: relative;
-        }
-
-        #control {
-            border: 1px solid #000000;
-            display: inline-block;
-            position: relative;
-        }
-
-        #register {
-            border: 1px solid #000000;
-            display: inline-block;
-            position: relative;
-        }
-
-    </style>
-
     <body>
-        <div id="container">
-            <div id="rem">
-                <div id="image">
-                    <canvas id="canvas" height="256" width="256"></canvas>
+        <div id="rem">
+            <div id="image" class="window">
+                <div class="window-top">
+                    <span class="window-title">Image</span>
+                    <span class="round min"></span>
                 </div>
+                <div class="window-content">
+                    <canvas id="canvas" height="512" width="512"></canvas>
+                </div>
+                <div class="window-footer">
+                    <progress id="progress-bar" max="100" value="0"></progress>
+                    Image acquired in <span id="time">n/a s</span>
+                </div>
+            </div>
 
-                <div id="register">
+            <div id="register" class="window">
+                <div class="window-top">
+                    <span class="window-title">Register</span>
+                    <span class="round min"></span>
+                </div>
+                <div class="window-content">
                     <table>
                         <thead>
                             <tr>
@@ -67,29 +49,27 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
 
-                <div id="control">
+            <div id="control" class="window">
+                <div class="window-top">
+                    <span class="window-title">Control</span>
+                    <span class="round min"></span>
+                </div>
+                <div class="window-content">
                     <button id="connect-button" onclick="onConnectButtonClick()">Connect</button>
                     <button id="init-button" onclick="onInitButtonClick()" disabled>Init</button>
                     <button id="scan-button" onclick="onScanButtonClick()" disabled>Scan</button>
                     <button id="abort-button" onclick="onAbortButtonClick()" disabled>Abort</button>
-                    
-                </div>
-
-                <div id="progress">
-                    <label for="progress-bar">Progress:</label>
-                    <progress id="progress-bar" max="100" value="0"></progress>
-                </div>
-                
-                <div id="time">
-                    
                 </div>
             </div>
+            
         </div>
 
         <!--<script src="https://cdn.jsdelivr.net/gh/makeabilitylab/p5js/_libraries/serial.js"></script>-->
         <script src="js/serial.js"></script>
         <script src="js/rem.js"></script>
+        <script src="js/window.js"></script>
         <script src="js/gui.js"></script>
     </body>
 </html>

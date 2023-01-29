@@ -46,9 +46,8 @@ const REMregister = [
 
     { use: false },
     { use: false },
-    { use: false },
 
-    { use: true,  name: "Clock Freq",  display: "unsigned", readonly: true },
+    { use: true,  name: "Clock Freq",  display: "unsigned", readonly: true, unit: "MHz" },
     { use: true,  name: "PCB Version", display: "hex", readonly: true },
     { use: true,  name: "FW Version",  display: "hex", readonly: true },
     { use: true,  name: "FW Build",    display: "hex", readonly: true }
@@ -255,8 +254,6 @@ class REMinterface {
             this.rx_buffer = responses.pop();
             this.response_buffer = this.response_buffer.concat(responses);
         } else {
-            //this.chunk = newData;
-
             var tmp = new Uint8Array(this.image.length + newData.length);
             
             tmp.set(this.image);

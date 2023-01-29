@@ -12,6 +12,10 @@ var ctx = canvas.getContext("2d", { alpha: true, willReadFrequently: true });
 var startTime = 0;
 var stopTime = 0;
 
+makeDraggable(document.querySelector('#image'));
+makeDraggable(document.querySelector('#register'));
+makeDraggable(document.querySelector('#control'));
+
 window.addEventListener("load", (event) => {
     var register = document.getElementById("register-list");
     

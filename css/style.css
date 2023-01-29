@@ -1,0 +1,108 @@
+body {
+    height: 100vh;
+    width: 100wh;
+    margin: 0;
+    padding: 0;
+    background: #AAA;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#image {
+    z-index: 1;
+    top: 10px;
+    left: 10px;
+}
+
+#control {
+    z-index: 3;
+    top: 660px;
+    left: 10px;
+}
+
+#register {
+    z-index: 2;
+    top: 10px;
+    left: 560px;
+}
+
+#register input {
+    width: 40px;
+}
+
+/* WINDOWS */
+
+.window {
+	position: fixed;
+	border-radius: 10px;
+	border: none;
+	box-shadow: 1px 1px 4px rgba(0,0,0,0,0.9), -1px 1px 4px rgba(0,0,0,0,0.9);
+	background: #fff;
+}
+
+.window-content {
+	background: #222;
+	color: #fff;
+	height: 100%;
+	padding: 10px;
+}
+
+.window-footer {
+	display: block;
+	width: calc(100% - 4px);
+	background-color: #444;
+    color: #888;
+    font-weight: 600;
+	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+	padding: 2px;
+	position: relative;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	outline: 0;
+    text-align: center;
+}
+
+.window-top, .window-top-no-bind {
+	cursor: move;
+	height: 20px;
+	border-bottom: 1px solid rgba(0,0,0,0.5);
+	border-top-right-radius: 5px;
+	border-top-left-radius: 5px;
+	padding: 5px;
+	background-color: #ddd;
+}
+
+.window-top-no-bind {
+	cursor: inherit;
+}
+
+.window-title {
+    text-align: left;
+    float: left;
+    font-weight: bolder;
+}
+
+.window-footer progress {
+    width: 95%;
+}
+
+.round {
+    display: block;
+    float: right;
+	height: 16px;
+	width: 16px;
+	border-radius: 50%;
+	border: none;
+	margin-right: 6px;
+	box-shadow: 1px 1px 2px #000;
+    cursor: pointer;
+}
+
+.min {
+	background-color: green;
+}
+
+.max {
+	background-color: yellow;
+}
