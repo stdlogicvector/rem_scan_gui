@@ -1,39 +1,65 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="utf-8" />
-		<meta name="description" content="Stundenpläne erstellen" />
-		<meta name="author" content="kw" />
-		<meta name="theme-color" content="#56fcbf" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-		/>
+    	<meta charset="utf-8" />
+			<meta name="description" content="REM Scan Controller" />
+			<meta name="author" content="kw" />
+			<meta
+				name="viewport"
+				content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+			/>
 
-        <title>REM Scan</title>
+      <title>REM Scan</title>
 
-        <link rel="stylesheet" href="./css/style.css" />
+      <link rel="stylesheet" href="./css/style.css" />
+      <link rel="icon" type="image/x-icon" href="./img/favicon.ico">
+      <link rel="icon" type="image/png" sizes="32x32" href="./img/favicon-32x32.png">
+			<link rel="icon" type="image/png" sizes="16x16" href="./img/favicon-16x16.png">
     </head>
     <body>
         <div id="rem">
+            <div id="message" class="window">
+                <div class="window-top">
+                    <span class="window-title">Message</span>
+                    <span class="round close"></span>
+                </div>
+                <div class="window-content">
+                </div>
+                <div class="window-footer"></div>
+            </div>
+
             <div id="image" class="window">
                 <div class="window-top">
                     <span class="window-title">Image</span>
-                    <span class="round min"></span>
+                    <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
-                    <canvas id="canvas" height="512" width="512"></canvas>
+                    <canvas id="image-canvas" height="512" width="512"></canvas>
                 </div>
                 <div class="window-footer">
-                    <progress id="progress-bar" max="100" value="0"></progress>
+                    <div class="progress-box">
+                    	<div class="progress-bar" id="progress-bar">0%</div>
+                    </div>
                     Image acquired in <span id="time">n/a s</span>
+                </div>
+            </div>
+
+            <div id="pattern" class="window">
+                <div class="window-top">
+                    <span class="window-title">Pattern</span>
+                    <span class="round minimize"></span>
+                </div>
+                <div class="window-content">
+                    <canvas id="pattern-canvas" height="256" width="256"></canvas>
+                </div>
+                <div class="window-footer">
                 </div>
             </div>
 
             <div id="register" class="window">
                 <div class="window-top">
                     <span class="window-title">Register</span>
-                    <span class="round min"></span>
+                    <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
                     <table>
@@ -49,12 +75,13 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="window-footer"></div>
             </div>
 
             <div id="control" class="window">
                 <div class="window-top">
                     <span class="window-title">Control</span>
-                    <span class="round min"></span>
+                    <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
                     <button id="connect-button" onclick="onConnectButtonClick()">Connect</button>
@@ -62,11 +89,11 @@
                     <button id="scan-button" onclick="onScanButtonClick()" disabled>Scan</button>
                     <button id="abort-button" onclick="onAbortButtonClick()" disabled>Abort</button>
                 </div>
+                <div class="window-footer"></div>
             </div>
             
         </div>
 
-        <!--<script src="https://cdn.jsdelivr.net/gh/makeabilitylab/p5js/_libraries/serial.js"></script>-->
         <script src="js/serial.js"></script>
         <script src="js/rem.js"></script>
         <script src="js/window.js"></script>

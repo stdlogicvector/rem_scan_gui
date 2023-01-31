@@ -7,10 +7,24 @@ body {
     font-family: 'Courier New', Courier, monospace;
 }
 
+#message {
+    z-index: 99;
+    top: 50%;
+    left: calc(50% - 150px);
+	display: none;
+	width: 300px;
+}
+
 #image {
     z-index: 1;
     top: 10px;
     left: 10px;
+}
+
+#pattern {
+	z-index: 2;
+    top: 10px;
+    left: 550px;
 }
 
 #control {
@@ -19,14 +33,45 @@ body {
     left: 10px;
 }
 
+#control button {
+	width: 85px;
+	height: 50px;
+	font-weight: bolder;
+	font-size: 12pt;
+	font-family: 'Courier New', Courier, monospace;
+}
+
 #register {
-    z-index: 2;
+    z-index: 4;
     top: 10px;
-    left: 560px;
+    left: 835px;
 }
 
 #register input {
-    width: 40px;
+    width: 45px;
+}
+
+#register input::-webkit-outer-spin-button,
+#register input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.progress-box {
+	margin: 0 auto;
+	border: 1px solid #ccc!important;
+	display: block;
+}
+
+.progress-bar {
+	width: 0%;
+	color: #fff;
+  background-color: #2196F3;
+  text-align: center!important;
+}
+
+.window-footer .progress-box {
+    width: 95%;
 }
 
 /* WINDOWS */
@@ -50,17 +95,17 @@ body {
 	display: block;
 	width: calc(100% - 4px);
 	background-color: #444;
-    color: #888;
-    font-weight: 600;
+  color: #888;
+  font-weight: 600;
 	border-bottom-right-radius: 5px;
 	border-bottom-left-radius: 5px;
-	padding: 2px;
+	padding: 8px 2px 2px 2px;
 	position: relative;
 	bottom: 0;
 	left: 0;
 	right: 0;
 	outline: 0;
-    text-align: center;
+  text-align: center;
 }
 
 .window-top, .window-top-no-bind {
@@ -83,26 +128,26 @@ body {
     font-weight: bolder;
 }
 
-.window-footer progress {
-    width: 95%;
-}
-
 .round {
-    display: block;
-    float: right;
+	display: block;
+	float: right;
 	height: 16px;
 	width: 16px;
 	border-radius: 50%;
 	border: none;
 	margin-right: 6px;
 	box-shadow: 1px 1px 2px #000;
-    cursor: pointer;
+  	cursor: pointer;
 }
 
-.min {
-	background-color: green;
+.close {
+	background-color: #8d0000;
 }
 
-.max {
-	background-color: yellow;
+.minimize {
+	background-color: #008d00;
+}
+
+.maximize {
+	background-color: #8d4e00;
 }

@@ -99,6 +99,8 @@ const SerialEvents = Object.freeze({
   
           console.log("Attempting to open port:")
           this.open(serialOptions);
+        } else {
+        	await this.connectAndOpen(null, serialOptions);
         }
       }
     }
@@ -125,24 +127,28 @@ const SerialEvents = Object.freeze({
     async close() {
       //See https://reillyeon.github.io/serial/#close-method
       if (this.dataReader) {
-        this.keepReading = false;
-        this.dataReader.cancel();
+        try {
+          this.keepReading = false;
+          this.dataReader.cancel();
+        } catch {}
   
-        //await this.readableDataStreamClosed.catch(() => { /* Ignore the error */ });
         this.dataReader = null;
-        //this.readableDataStreamClosed = null;
       }
   
       if (this.textWriter) {
-        await this.textWriter.close();
-        await this.writableTextStreamClosed;
+        try {
+          await this.textWriter.close();
+          await this.writableTextStreamClosed;
+        } catch {}
   
         this.textWriter = null;
         this.writableTextStreamClosed = null;
       }
   
       if (this.serialPort) {
-        await this.serialPort.close();
+        try {
+          await this.serialPort.close();
+        } catch {}
         this.serialPort = null;
       }
   
@@ -275,7 +281,7 @@ const SerialEvents = Object.freeze({
           // handle non-fatal error
           this.fireEvent(SerialEvents.ERROR_OCCURRED, error);
 
-          if (error.name == "BreakError")
+          if (error.name == "BreakError" || error.name == "NetworkError")
           {
             this.keepReading = false;
             this.close();

@@ -58,7 +58,8 @@ const REMevents = Object.freeze({
     CONNECTION_CLOSED: Symbol("Connection closed"),
     IMAGE_RECEIVED: Symbol("New Image received"),
     CHUNK_RECEIVED: Symbol("New Chunk received"),
-    REGISTER_CHANGE: Symbol("Register Value changed")
+    REGISTER_CHANGE: Symbol("Register Value changed"),
+    ERROR_OCCURRED: Symbol("An Error occurred")
 })
 
 class REMinterface {
@@ -66,12 +67,14 @@ class REMinterface {
     {
         this.events = new Map();
 
-        this.knownEvents = new Set(
-            [REMevents.CONNECTION_OPENED,
+        this.knownEvents = new Set([
+            REMevents.CONNECTION_OPENED,
             REMevents.CONNECTION_CLOSED,
             REMevents.IMAGE_RECEIVED,
             REMevents.CHUNK_RECEIVED,
-            REMevents.REGISTER_CHANGE]);
+            REMevents.REGISTER_CHANGE,
+            REMevents.ERROR_OCCURRED
+        ]);
   
         this.serial = new Serial();
 
@@ -118,7 +121,7 @@ class REMinterface {
             stopBits: 1,
             parity: "none",
             flowControl: "none",
-            bufferSize: 1024
+            bufferSize: 4096
         };
         
         if (navigator.serial) {
@@ -235,7 +238,7 @@ class REMinterface {
     }
 
     onSerialError(eventSender, error) {
-        console.log("onSerialErrorOccurred", error);
+        this.fireEvent(REMevents.ERROR_OCCURRED, error)
     }
 
     onSerialOpened(eventSender) {

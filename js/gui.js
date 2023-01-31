@@ -5,14 +5,17 @@ rem.on(REMevents.CONNECTION_CLOSED, onConnectionClosed);
 rem.on(REMevents.REGISTER_CHANGE, onRegisterChange);
 rem.on(REMevents.IMAGE_RECEIVED, onImageReceived);
 rem.on(REMevents.CHUNK_RECEIVED, onChunkReceived);
+rem.on(REMevents.ERROR_OCCURRED, onErrorOccurred);
 
-var canvas = document.getElementById("canvas");
+var canvas = document.getElementById("image-canvas");
 var ctx = canvas.getContext("2d", { alpha: true, willReadFrequently: true });
 
 var startTime = 0;
 var stopTime = 0;
 
+makeDraggable(document.querySelector('#message'));
 makeDraggable(document.querySelector('#image'));
+makeDraggable(document.querySelector('#pattern'));
 makeDraggable(document.querySelector('#register'));
 makeDraggable(document.querySelector('#control'));
 
@@ -97,6 +100,16 @@ function onConnectionClosed(eventSender)
     document.getElementById("connect-button").disabled = false;
 }
 
+function onErrorOccurred(eventSender, error)
+{
+    var msg = document.getElementById("message");
+    msg.style.display = "block";
+    
+    msg.childNodes[3].innerHTML = error;
+
+    console.log(error);
+}
+
 async function onRegisterChangeUser(event)
 {
     var nr = event.target.id.split("-")[1];
@@ -117,9 +130,9 @@ function onRegisterChange(eventSender, data)
     if (register)
     {
         if (REMregister[data.nr].mult)
-            register.value = (data.val * REMregister[data.nr].mult).toFixed(3);
+            register.value = (data.val * REMregister[data.nr].mult).toFixed(2);
         else if (REMregister[data.nr].div)
-            register.value = (data.val / REMregister[data.nr].div).toFixed(3);
+            register.value = (data.val / REMregister[data.nr].div).toFixed(2);
         else
             register.value = data.val;
     }
@@ -145,8 +158,10 @@ function onImageReceived(eventSender, data)
 
 function onChunkReceived(eventSender, data)
 {
-    var percent = data.image.length / (data.w * data.h);
-    document.getElementById("progress-bar").value = Math.round(percent * 100.0);
+    var percent = Math.round(data.image.length / (data.w * data.h) * 100.0);
+    var progress = document.getElementById("progress-bar");
+    progress.style.width = percent + '%'; 
+    progress.innerHTML = percent * 1  + '%';
     
     let dataRGBA = new Uint8Array(data.w*data.h*4);
     convertRGBA(data.image, dataRGBA, data.w, data.h, data.image.length);

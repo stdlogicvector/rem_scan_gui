@@ -46,6 +46,33 @@ function makeDraggable (elmnt) {
 }
 for (const minMaxElement of document.querySelectorAll('.round')) {
 	minMaxElement.addEventListener('click', function (event) {
-		console.log(event.target.classList);
+        var action = event.target.classList[1];
+		var window = event.target.parentNode.parentNode;
+        
+      
+        if (action == "close")
+            window.style.display = "none";
+
+        if (action == "minimize")
+        {
+            window.childNodes[3].style.height = "0px";
+            window.childNodes[3].style.paddingTop = "0px";
+            window.childNodes[3].style.paddingBottom = "0px";
+            window.childNodes[3].style.overflow = "hidden";
+                
+            event.target.classList.remove("minimize");
+            event.target.classList.add("maximize");
+        }
+
+        if (action == "maximize")
+        {
+            window.childNodes[3].style.height = "";
+            window.childNodes[3].style.paddingTop = "";
+            window.childNodes[3].style.paddingBottom = "";
+            window.childNodes[3].style.overflow = "";
+            event.target.classList.remove("maximize");
+            event.target.classList.add("minimize");
+        }
+
 	});
 }
