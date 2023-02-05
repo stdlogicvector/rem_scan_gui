@@ -88,14 +88,14 @@ const SerialEvents = Object.freeze({
      * Automatically connects and opens the previously approved port
      * If there are more than one, it takes the top port in the approved port list
      */
-    async autoConnectAndOpenPreviouslyApprovedPort(serialOptions = { baudRate: 9600 }) {
+    async autoConnectAndOpenPreviouslyApprovedPort(serialOptions = { baudRate: 9600 }, nr = 0) {
       if (navigator.serial) {
         const approvedPortList = await navigator.serial.getPorts();
         console.log("approvedPortList", approvedPortList);
   
         if (approvedPortList.length > 0) {
-          console.log("Trying to auto-connect to:", approvedPortList[0].getInfo());
-          await this.connect(approvedPortList[0]);
+          console.log("Trying to auto-connect to:", approvedPortList[nr].getInfo());
+          await this.connect(approvedPortList[nr]);
   
           console.log("Attempting to open port:")
           this.open(serialOptions);

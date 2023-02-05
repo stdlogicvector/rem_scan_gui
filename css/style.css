@@ -21,14 +21,47 @@ body {
     left: 10px;
 }
 
+#image canvas {
+	border: 1px dotted #666;
+}
+
 #pattern {
 	z-index: 2;
     top: 10px;
     left: 550px;
 }
 
+#pattern canvas {
+	border: 1px solid #666;
+}
+
+#pattern-parameter label
+{
+	font-size: 10pt;
+}
+
+#pattern-parameter input
+{
+	width: 45px;
+}
+
+#digitize {
+	z-index: 3;
+    top: 500px;
+    left: 550px;
+}
+
+#digitize-parameter label
+{
+	font-size: 10pt;
+}
+
+#digitize select {
+	width: 168px;
+}
+
 #control {
-    z-index: 3;
+    z-index: 5;
     top: 660px;
     left: 10px;
 }
@@ -47,8 +80,19 @@ body {
     left: 835px;
 }
 
+#register label
+{
+	font-size: 10pt;
+}
+
 #register input {
     width: 45px;
+}
+
+#register input:read-only {
+    border: none;
+	background-color: transparent;
+	color: #fff;
 }
 
 #register input::-webkit-outer-spin-button,
@@ -66,8 +110,8 @@ body {
 .progress-bar {
 	width: 0%;
 	color: #fff;
-  background-color: #2196F3;
-  text-align: center!important;
+	background-color: #2196F3;
+	text-align: center!important;
 }
 
 .window-footer .progress-box {

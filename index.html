@@ -35,12 +35,11 @@
                 </div>
                 <div class="window-content">
                     <canvas id="image-canvas" height="512" width="512"></canvas>
-                </div>
-                <div class="window-footer">
-                    <div class="progress-box">
+					<div class="progress-box">
                     	<div class="progress-bar" id="progress-bar">0%</div>
                     </div>
-                    Image acquired in <span id="time">n/a s</span>
+                </div>
+                <div class="window-footer">
                 </div>
             </div>
 
@@ -51,9 +50,93 @@
                 </div>
                 <div class="window-content">
                     <canvas id="pattern-canvas" height="256" width="256"></canvas>
+					<div id="pattern-parameter">
+					<table>
+					<tr>
+						<td><label for="pattern-size-x">Width</label></td>
+						<td><input id="pattern-size-x" type="number" min="0" max="65536" data-register="10"></input></td>
+						<td><label for="pattern-size-y">Height</label></td>
+						<td><input id="pattern-size-y" type="number" min="0" max="65536" data-register="11"></input></td>
+					</tr>
+					<tr>
+						<td><label for="pattern-step-x">Step X</label></td>
+						<td><input id="pattern-step-x" type="number" min="1" max="4096" data-register="12"></input></td>
+						<td><label for="pattern-step-y">Step Y</label></td>
+						<td><input id="pattern-step-y" type="number" min="1" max="4096"  data-register="13"></input></td>
+					</tr>
+					<tr>	
+						<td><label for="pattern-offset-x">Offset X</label></td>
+						<td><input id="pattern-offset-x" type="number" min="0" max="65536" data-register="8"></input></td>
+						<td><label for="pattern-offset-y">Offset Y</label></td>
+						<td><input id="pattern-offset-y" type="number" min="0" max="65536" data-register="9"></input></td>
+					</tr>
+					<tr>	
+						<td><label for="pattern-scale-x">Scale X</label></td>
+						<td><input id="pattern-scale-x" type="number" min="0" max="2" step="0.1"></input></td>
+						<td><label for="pattern-scale-y">Scale Y</label></td>
+						<td><input id="pattern-scale-y" type="number" min="0" max="2" step="0.1"></input></td>
+					</tr>
+					<tr>	
+						<td><label for="pattern-skew-x">Skew X</label></td>
+						<td><input id="pattern-skew-x" type="number" min="-20" max="20"></input></td>
+						<td><label for="pattern-skew-y">Skew Y</label></td>
+						<td><input id="pattern-skew-y" type="number" min="-20" max="20"></input></td>
+					</tr>
+					<tr>	
+						<td><label for="pattern-rotation">Rotation</label></td>
+						<td><input id="pattern-rotation" type="number" min="-180" max="180"></input></td>
+					</tr>
+					</table>
+					</div>
                 </div>
                 <div class="window-footer">
                 </div>
+            </div>
+			
+			<div id="digitize" class="window">
+                <div class="window-top">
+                    <span class="window-title">Digitize</span>
+                    <span class="round minimize"></span>
+                </div>
+                <div class="window-content">
+                    <table id="digitize-parameter">
+                    <tr>
+                        <td><label for="digitize-source">Source</label></td>
+                        <td><select id="digitize-source" data-register="0" data-bits="2">
+                            <option value="0">AD Converter</option>
+                            <option value="1">Testimage</option>
+                        </select></td>
+                    </tr>
+					<tr>
+						<td><label for="digitize-channel">Channel</label></td>
+						<td><select id="digitize-channel" data-register="0" data-bits="0">
+							<option value="0">0: n/a</option>
+							<option value="1">1: SEV</option>
+						</select></td>
+					</tr>
+					<tr>
+						<td><label for="digitize-resolution">Resolution</label></td>
+						<td><select id="digitize-resolution" data-register="0" data-bits="1">
+							<option value="0">16 bit</option>
+							<option value="1">8 bit</option>
+						</select></td>
+					</tr>
+					<tr>
+						<td><label for="digitize-testimage">Testimage</label></td>
+						<td><select id="digitize-testimage" data-register="1" data-bits="3:0">
+							<option value="0">Col L / Row L</option>
+                            <option value="1">Col L / Row H</option>
+                            <option value="2">Col H / Row L</option>
+                            <option value="3">Col H / Row H</option>
+							<option value="4">X L / Y L</option>
+                            <option value="5">X L / Y H</option>
+                            <option value="6">X H / Y L</option>
+                            <option value="7">X H / Y H</option>
+						</select></td>
+					</tr>
+                    </table>
+                </div>
+                <div class="window-footer"></div>
             </div>
 
             <div id="register" class="window">
@@ -62,17 +145,7 @@
                     <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Value</th>
-                                <th>Unit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="register-list">
-                        </tbody>
+                    <table id="register-list">
                     </table>
                 </div>
                 <div class="window-footer"></div>

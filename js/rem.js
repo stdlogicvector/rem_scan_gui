@@ -1,10 +1,12 @@
-const REMregister = [
-    { use: true,  name: "Configuration", display: "checkbox", bits: [
+const REMregisterCount = 32;
+
+const REMregisterMap = [
+    { use: true,  name: "Configuration", type: "bitfield", bits: [
         {id: 0, name: "Channel 1" },
         {id: 1, name: "8-Bit" },
         {id: 2, name: "Test Image" }
     ] },
-    { use: true, name: "Test Img. Mode", display: "dropdown", options: [
+    { use: true, name: "Test Img. Mode", type: "select", options: [
         {id: 0, name: "RC Lo/Lo" },
         {id: 1, name: "RC Lo/Hi" },
         {id: 2, name: "RC Hi/Lo" },
@@ -22,35 +24,35 @@ const REMregister = [
     { use: false },
     { use: false },
     
-    { use: true,  name: "Offset X", display: "unsigned", min: 0, max:0xFFFF, unit: "stp" },
-    { use: true,  name: "Offset Y", display: "unsigned", min: 0, max:0xFFFF, unit: "stp" },
-    { use: true,  name: "Steps X",  display: "unsigned", min: 0, max:0xFFFF},
-    { use: true,  name: "Steps Y",  display: "unsigned", min: 0, max:0xFFFF},
-    { use: true,  name: "Delta X",  display: "unsigned", min: 0, max:0xFFFF, unit: "stp" },
-    { use: true,  name: "Delta Y",  display: "unsigned", min: 0, max:0xFFFF, unit: "stp" },
+    { use: true,  name: "Offset X", type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
+    { use: true,  name: "Offset Y", type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
+    { use: true,  name: "Steps X",  type: "unsigned", min: 1, max: 2^16-1 },
+    { use: true,  name: "Steps Y",  type: "unsigned", min: 1, max: 2^16-1 },
+    { use: true,  name: "Delta X",  type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
+    { use: true,  name: "Delta Y",  type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
     
     { use: false },
     { use: false },
 
-    { use: true,  name: "Ctrl. Delay", display: "unsigned", min: 0, max:0xFFFF, unit: "ms", mult: 0.00256 },
-    { use: true,  name: "Init Delay",  display: "unsigned", min: 0, max:0xFFFF, unit: "us", mult: 0.01 },
-    { use: true,  name: "Col. Delay",  display: "unsigned", min: 0, max:0xFFFF, unit: "us", mult: 0.01  },
-    { use: true,  name: "Row Delay",   display: "unsigned", min: 0, max:0xFFFF, unit: "us", mult: 0.01  },
+    { use: true,  name: "Ctrl. Delay", type: "unsigned", min: 0, max: 2^16-1, unit: "ms", mult: 0.00256 },
+    { use: true,  name: "Init Delay",  type: "unsigned", min: 0, max: 2^16-1, unit: "us", mult: 0.01 },
+    { use: true,  name: "Col. Delay",  type: "unsigned", min: 0, max: 2^16-1, unit: "us", mult: 0.01  },
+    { use: true,  name: "Row Delay",   type: "unsigned", min: 0, max: 2^16-1, unit: "us", mult: 0.01  },
 
-    { use: true,  name: "Transform 00", display: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 01", display: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 02", display: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 10", display: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 11", display: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 12", display: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
+    { use: true,  name: "Transform 00", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
+    { use: true,  name: "Transform 10", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
+    { use: true,  name: "Transform 01", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
+    { use: true,  name: "Transform 11", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
+    { use: true,  name: "Transform 02", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
+    { use: true,  name: "Transform 12", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
 
     { use: false },
     { use: false },
 
-    { use: true,  name: "Clock Freq",  display: "unsigned", readonly: true, unit: "MHz" },
-    { use: true,  name: "PCB Version", display: "hex", readonly: true },
-    { use: true,  name: "FW Version",  display: "hex", readonly: true },
-    { use: true,  name: "FW Build",    display: "hex", readonly: true }
+    { use: true,  name: "Clock Freq",  type: "unsigned", readonly: true, unit: "MHz" },
+    { use: true,  name: "PCB Version", type: "hex", readonly: true },
+    { use: true,  name: "FW Version",  type: "hex", readonly: true },
+    { use: true,  name: "FW Build",    type: "hex", readonly: true }
 ];
 
 const REMevents = Object.freeze({
@@ -88,7 +90,8 @@ class REMinterface {
         this.rx_buffer = "";
         this.response_buffer = [];
 
-        this.register = [];
+        // Fill passes reference not distinct instances -> use Map
+        this.register = new Array(REMregisterCount).fill().map(() => {return new Object({val: 0, inited: false, listeners: [] });}); 
 
         this.chunk = null;
         this.image = null;
@@ -96,21 +99,34 @@ class REMinterface {
     }
 
     on(label, callback) {
-        if (this.knownEvents.has(label)) {
-            if (!this.events.has(label)) {
+        if (this.knownEvents.has(label))
+        {
+            if (!this.events.has(label))
                 this.events.set(label, []);
-            }
+            
             this.events.get(label).push(callback);
-        } else {
+        } else
+        {
             console.log(`Could not create event subscription for ${label}. Event unknown.`);
         }
     }
 
+    onRegisterChange(nr, callback) {
+        if (0 <= nr && nr < REMregisterCount)
+            this.register[nr].listeners.push(callback);
+    }
+
     fireEvent(event, data = null) {
-        if (this.events.has(event)) {
-            for (let callback of this.events.get(event)) {
-                callback(this, data);
+        if (this.events.has(event))
+        {
+            if (event == REMevents.REGISTER_CHANGE && 0 <= data && data <= REMregisterCount)
+            {
+                for (let callback of this.register[data].listeners)
+                    callback(this, data);
             }
+
+            for (let callback of this.events.get(event))
+                callback(this, data);
         }
     }
 
@@ -125,14 +141,14 @@ class REMinterface {
         };
         
         if (navigator.serial) {
-            await this.serial.autoConnectAndOpenPreviouslyApprovedPort(serialOptions);
+//            await this.serial.autoConnectAndOpenPreviouslyApprovedPort(serialOptions);
 
-/*            if (!this.serial.isOpen()) {
+            if (!this.serial.isOpen()) {
                 await this.serial.connectAndOpen(
                     [{ usbVendorId: 0x0403, usbProductId: 0x6011 }],
                     serialOptions);
             }
-*/           
+         
             
         } else {
             alert('The Web Serial API is not supported on this browser.');
@@ -173,11 +189,15 @@ class REMinterface {
         {
             var val = parseInt(regval[1], 16);
 
-            if (this.register[nr] != val)
-                this.fireEvent(REMevents.REGISTER_CHANGE, {nr: nr, val: val});
+            this.register[nr].val = val;
 
-            this.register[nr] = val;
-            return this.register[nr];
+            if (this.register[nr].val != val || this.register[nr].inited == false)
+            {
+                this.register[nr].inited = true;
+                this.fireEvent(REMevents.REGISTER_CHANGE, nr);
+            }
+
+            return this.register[nr].val;
         } else
             return undefined;        
     }
@@ -191,10 +211,12 @@ class REMinterface {
 
         if (response.match("!"))
         {
-            if (this.register[nr] != val)
-                this.fireEvent(REMevents.REGISTER_CHANGE, {nr: nr, val: val});
+            var old_val = this.register[nr].val;
 
-            this.register[nr] = val;
+            this.register[nr].val = val;
+
+            if (old_val != val)
+                this.fireEvent(REMevents.REGISTER_CHANGE, nr);
 
             return true;
         }
@@ -231,11 +253,86 @@ class REMinterface {
         if (!this.serial.isOpen()) 
             return false;
 
-        for (var r = 0; r < 32; ++r)
-        {
-            this.register[r] = await this.readRegister(r);
-        }
+        for (var nr = 0; nr < 32; ++nr)
+            await this.readRegister(nr);
     }
+	
+    getImageWidth()
+    {
+        return this.register[10].val;
+    }
+
+    getImageHeight()
+    {
+        return this.register[11].val;
+    }
+
+	getPatternRect()
+	{
+		return {
+			x: this.register[8].val,
+			y: this.register[9].val,
+			w: this.register[10].val * this.register[12].val,
+			h: this.register[11].val * this.register[13].val
+		};
+	}
+
+	async setPatternRect(x, y, w, h, dx, dy)
+	{
+		var reg = 8;
+		for (const arg in arguments)
+		{	
+			await this.writeRegister(reg, clamp(arg,  REMregisterMap[reg].min, REMregisterMap[reg].max));
+			reg++;
+		}
+	}
+
+	getPatternTransform()
+	{
+		var t = [];
+		
+		for (var reg = 20; reg < 26; ++reg)
+			t.push(this.register[reg].val / REMregisterMap[reg].div);
+		
+		return new DOMMatrix(t);
+	}
+	
+	async setPatternTransform(a,b,c,d,e,f)
+	{
+		var reg = 20;
+		for (const arg in arguments)
+		{	
+			var v = clamp(arg * REMregisterMap[reg].div, REMregisterMap[reg].min, REMregisterMap[reg].max);
+			await this.writeRegister(reg, v);
+			reg++;
+		}
+	}
+	
+	makeTransform(fx, fy, sx, sy, r)
+	{
+		// a c e
+		// b d f
+		// 		  0  1  2  3  4  5
+		//        a  b  c  d  e  f
+		var t = [ 1, 0, 0, 1, 0, 0];
+		
+		// Scale
+		t[3] *= fy;
+		t[0] *= fx;	
+		
+		// Skew
+		t[1] += Math.tan(sy / 180.0 * Math.PI);
+		t[2] += Math.tan(sx / 180.0 * Math.PI);
+		
+		// Rotate
+		t[0] += Math.cos(r / 180.0 * Math.PI);
+		t[3] += m[0][0];
+		
+		m[1] += Math.sin(r / 180.0 * Math.PI);
+		m[2] += -m[1][0];
+		
+		return new DOMMatrix(t);
+	}
 
     onSerialError(eventSender, error) {
         this.fireEvent(REMevents.ERROR_OCCURRED, error)
@@ -267,7 +364,7 @@ class REMinterface {
             
             this.onChunkReceived();
 
-            if (this.count >= this.register[10] * this.register[11])
+            if (this.count >= this.register[10].val * this.register[11].val)
             {
                 this.mode = "cmd";
                 this.onImageReceived();
@@ -278,8 +375,8 @@ class REMinterface {
     onChunkReceived()
     {
         this.fireEvent(REMevents.CHUNK_RECEIVED, {
-            h: this.register[11],
-            w: this.register[10],
+            h: this.register[11].val,
+            w: this.register[10].val,
             image: this.image
         });
     }
@@ -287,8 +384,8 @@ class REMinterface {
     onImageReceived()
     {
         this.fireEvent(REMevents.IMAGE_RECEIVED, {
-            h: this.register[11],
-            w: this.register[10],
+            h: this.register[11].val,
+            w: this.register[10].val,
             image: this.image
         });
     }
@@ -308,3 +405,7 @@ function dec2hex(d, padding) {
 
     return hex;
 }
+
+function clamp(v, min, max) {
+  return Math.min(Math.max(v, min), max);
+};
