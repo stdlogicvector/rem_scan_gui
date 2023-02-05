@@ -2,7 +2,7 @@ const rem = new REMinterface();
 
 rem.on(REMevents.CONNECTION_OPENED, onConnectionOpened);
 rem.on(REMevents.CONNECTION_CLOSED, onConnectionClosed);
-rem.on(REMevents.REGISTER_CHANGE, onRegisterChange);
+//rem.on(REMevents.REGISTER_CHANGE, onRegisterChange);
 rem.on(REMevents.IMAGE_RECEIVED, onImageReceived);
 rem.on(REMevents.CHUNK_RECEIVED, onChunkReceived);
 rem.on(REMevents.ERROR_OCCURRED, onErrorOccurred);
@@ -13,7 +13,9 @@ var img_ctx = img_canvas.getContext("2d", { alpha: true, willReadFrequently: tru
 var pat_canvas = document.getElementById("pattern-canvas");
 var pat_ctx = pat_canvas.getContext("2d", { alpha: true, willReadFrequently: false });
 
-var inputs = [];
+var registers = [];
+var transforms = [];
+var transformation = {};
 
 var startTime = 0;
 var stopTime = 0;
@@ -25,11 +27,38 @@ makeDraggable(document.querySelector('#digitize'));
 makeDraggable(document.querySelector('#register'));
 makeDraggable(document.querySelector('#control'));
 
+var pat_fill_canvas = document.createElement("canvas");
+pat_fill_canvas.width = 10;
+pat_fill_canvas.height = 10;
+var pat_fill_ctx = pat_fill_canvas.getContext("2d");
+
+let pat_fill_gradient = pat_fill_ctx.createLinearGradient(0, 0, pat_fill_canvas.width, pat_fill_canvas.height);
+
+const colorStops = [
+        [0, 'white'],
+        [0.35, 'white'],
+        [0.35, 'red'],
+        [0.5, 'red'],
+        [0.5, 'white'],
+        [0.85, 'white'],
+        [0.85, 'red'],
+        [1, 'red']
+];
+
+colorStops.forEach(element => {
+    pat_fill_gradient.addColorStop(element[0], element[1]);
+});
+
+pat_fill_ctx.fillStyle = pat_fill_gradient;
+pat_fill_ctx.fillRect(0, 0, pat_fill_canvas.width, pat_fill_canvas.height);
+
+let pat_fill = pat_fill_ctx.createPattern(pat_fill_canvas, 'repeat');
+
 window.addEventListener("load", (event) =>
 {
 	//test();
 	
-    var register = document.getElementById("register-list");
+    var inputs = document.getElementById("register-list");
     
     for (var nr = 0; nr < REMregisterCount; ++nr)
     {
@@ -62,11 +91,11 @@ window.addEventListener("load", (event) =>
 
             row.appendChild(col);
         
-            register.appendChild(row);
+            inputs.appendChild(row);
 
             rem.onRegisterChange(nr, onRegisterChange);
 
-            if ((8  <= nr && nr <= 13) ||
+            if ((8  <= nr && nr <= 11) ||
 		        (20 <= nr && nr <= 25))
 		    {
     			rem.onRegisterChange(nr, drawPattern);
@@ -74,12 +103,18 @@ window.addEventListener("load", (event) =>
         }
     }
 
-    inputs = document.querySelectorAll("[data-register]");
+    registers = document.querySelectorAll("[data-register]");
 
-    inputs.forEach((input) => {
-        input.addEventListener("change", onRegisterChangeUser);
+    registers.forEach((register) => {
+        register.addEventListener("change", onRegisterChangeUser);
     });
 
+    transforms = document.querySelectorAll("[data-transform]");
+
+    transforms.forEach((transform) => {
+        transformation[transform.dataset.transform] = transform;
+        transform.addEventListener("change", onTransformChangeUser);
+    });
     
 /*	
     pat_params = document.querySelectorAll("input[id^='pattern-']");
@@ -141,11 +176,18 @@ function drawPattern()
     pat_ctx.stroke();
 	
 	// Draw Pattern
-	pat_ctx.setTransform(rem.getPatternTransform());
-	
+    pat_ctx.save();
+
+    var t = rem.getPatternTransform();
+    t.e /= scale;
+    t.f /= scale;
+
+	pat_ctx.setTransform(t);
+
 	var rect = rem.getPatternRect();
-	
+
 	pat_ctx.globalAlpha = 0.4;
+    pat_ctx.fillStyle = pat_fill;    
 	pat_ctx.fillRect(rect.x/scale, rect.y/scale, rect.w/scale, rect.h/scale);
 	pat_ctx.globalAlpha = 1.0;
 	
@@ -153,7 +195,27 @@ function drawPattern()
 	pat_ctx.lineWidth = 1;
 	pat_ctx.strokeStyle = '#ffffff';
 	pat_ctx.rect(rect.x/scale, rect.y/scale, rect.w/scale, rect.h/scale);
-	pat_ctx.stroke();	
+	pat_ctx.stroke();
+
+    pat_ctx.restore();
+    // Update Scale/Skew/Rotation
+
+    console.log(".");
+}
+
+async function onTransformChangeUser(event)
+{
+    var t = rem.makePatternTransform(
+        (transformation.ox ? transformation.ox.value : 0.0),
+        (transformation.oy ? transformation.oy.value : 0.0),
+        (transformation.fx ? transformation.fx.value : 1.0),
+        (transformation.fy ? transformation.fy.value : 1.0),
+        (transformation.sx ? transformation.sx.value : 0.0),
+        (transformation.sy ? transformation.sy.value : 0.0),
+        (transformation.r  ? transformation.r.value  : 0.0),
+    );
+
+    await rem.setPatternTransform(t.a, t.b, t.c, t.d, t.e, t.f);
 }
 
 async function onConnectButtonClick() {
@@ -212,7 +274,7 @@ function onRegisterChange(eventSender, nr)
 {
     var val = rem.register[nr].val;
 
-    inputs.forEach((input) => 
+    registers.forEach((input) => 
     {
         if (input.dataset.register == nr)
         {

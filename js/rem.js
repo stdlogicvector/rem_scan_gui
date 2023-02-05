@@ -24,13 +24,13 @@ const REMregisterMap = [
     { use: false },
     { use: false },
     
-    { use: true,  name: "Offset X", type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
-    { use: true,  name: "Offset Y", type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
     { use: true,  name: "Steps X",  type: "unsigned", min: 1, max: 2^16-1 },
     { use: true,  name: "Steps Y",  type: "unsigned", min: 1, max: 2^16-1 },
     { use: true,  name: "Delta X",  type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
     { use: true,  name: "Delta Y",  type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
     
+    { use: false },
+    { use: false },
     { use: false },
     { use: false },
 
@@ -39,12 +39,12 @@ const REMregisterMap = [
     { use: true,  name: "Col. Delay",  type: "unsigned", min: 0, max: 2^16-1, unit: "us", mult: 0.01  },
     { use: true,  name: "Row Delay",   type: "unsigned", min: 0, max: 2^16-1, unit: "us", mult: 0.01  },
 
-    { use: true,  name: "Transform 00", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 10", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 01", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 11", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 02", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
-    { use: true,  name: "Transform 12", type: "signed", min: -2^15, max: 2^15-1, div: 0x4000 },
+    { use: true,  name: "Transform A", type: "signed", min: -(2**15), max: 2**15-1, div: 0x4000 },
+    { use: true,  name: "Transform B", type: "signed", min: -(2**15), max: 2**15-1, div: 0x4000 },
+    { use: true,  name: "Transform C", type: "signed", min: -(2**15), max: 2**15-1, div: 0x4000 },
+    { use: true,  name: "Transform D", type: "signed", min: -(2**15), max: 2**15-1, div: 0x4000 },
+    { use: true,  name: "Transform E", type: "signed", min: -(2**15), max: 2**15-1, div: 1 },
+    { use: true,  name: "Transform F", type: "signed", min: -(2**15), max: 2**15-1, div: 1 },
 
     { use: false },
     { use: false },
@@ -78,6 +78,8 @@ class REMinterface {
             REMevents.ERROR_OCCURRED
         ]);
   
+        this.silent = false;
+
         this.serial = new Serial();
 
         this.serial.on(SerialEvents.CONNECTION_OPENED, this.onSerialOpened.bind(this));
@@ -117,14 +119,19 @@ class REMinterface {
     }
 
     fireEvent(event, data = null) {
+        reg: if (event == REMevents.REGISTER_CHANGE && 0 <= data && data <= REMregisterCount)
+        {
+            console.log(data, this.silent);
+
+            //if (this.silent)
+                //break reg;
+
+            for (let callback of this.register[data].listeners)
+                callback(this, data);
+        }
+        
         if (this.events.has(event))
         {
-            if (event == REMevents.REGISTER_CHANGE && 0 <= data && data <= REMregisterCount)
-            {
-                for (let callback of this.register[data].listeners)
-                    callback(this, data);
-            }
-
             for (let callback of this.events.get(event))
                 callback(this, data);
         }
@@ -229,8 +236,8 @@ class REMinterface {
         if (!this.serial.isOpen()) 
             return false;
 
-        await this.readRegister(10);
-        await this.readRegister(11);
+        await this.readRegister(8);
+        await this.readRegister(9);
 
         this.count = 0;
         this.image = [];
@@ -253,37 +260,40 @@ class REMinterface {
         if (!this.serial.isOpen()) 
             return false;
 
-        for (var nr = 0; nr < 32; ++nr)
+        for (var nr = 0; nr < REMregisterCount; ++nr)
+        {
             await this.readRegister(nr);
+        }
     }
 	
     getImageWidth()
     {
-        return this.register[10].val;
+        return this.register[8].val;
     }
 
     getImageHeight()
     {
-        return this.register[11].val;
+        return this.register[9].val;
     }
 
 	getPatternRect()
 	{
 		return {
-			x: this.register[8].val,
-			y: this.register[9].val,
-			w: this.register[10].val * this.register[12].val,
-			h: this.register[11].val * this.register[13].val
+			x: 0,
+			y: 0,
+			w: this.register[8].val * this.register[10].val,
+			h: this.register[9].val * this.register[11].val
 		};
 	}
 
-	async setPatternRect(x, y, w, h, dx, dy)
+	async setPatternRect(w, h, dx, dy)
 	{
 		var reg = 8;
 		for (const arg in arguments)
 		{	
-			await this.writeRegister(reg, clamp(arg,  REMregisterMap[reg].min, REMregisterMap[reg].max));
-			reg++;
+            this.silent = (arg < 3);
+			await this.writeRegister(reg, clamp(arguments[arg],  REMregisterMap[reg].min, REMregisterMap[reg].max));
+            reg++;
 		}
 	}
 
@@ -297,42 +307,80 @@ class REMinterface {
 		return new DOMMatrix(t);
 	}
 	
-	async setPatternTransform(a,b,c,d,e,f)
+	async setPatternTransform(a, b, c, d, e, f)
 	{
 		var reg = 20;
+
 		for (const arg in arguments)
 		{	
-			var v = clamp(arg * REMregisterMap[reg].div, REMregisterMap[reg].min, REMregisterMap[reg].max);
+			var v = clamp(arguments[arg] * REMregisterMap[reg].div, REMregisterMap[reg].min, REMregisterMap[reg].max);
+
+            this.silent = (arg < 5);
 			await this.writeRegister(reg, v);
 			reg++;
 		}
 	}
 	
-	makeTransform(fx, fy, sx, sy, r)
+	makePatternTransform(ox, oy, fx, fy, sx, sy, r)
 	{
 		// a c e
 		// b d f
 		// 		  0  1  2  3  4  5
 		//        a  b  c  d  e  f
-		var t = [ 1, 0, 0, 1, 0, 0];
+		var t = [ 1, 0, 0, 1, 0, 0 ];
 		
 		// Scale
+        t[0] *= fx;	
 		t[3] *= fy;
-		t[0] *= fx;	
 		
 		// Skew
 		t[1] += Math.tan(sy / 180.0 * Math.PI);
 		t[2] += Math.tan(sx / 180.0 * Math.PI);
 		
 		// Rotate
-		t[0] += Math.cos(r / 180.0 * Math.PI);
-		t[3] += m[0][0];
+		t[0] *= Math.cos(r / 180.0 * Math.PI);
+		t[3] *= Math.cos(r / 180.0 * Math.PI);
 		
-		m[1] += Math.sin(r / 180.0 * Math.PI);
-		m[2] += -m[1][0];
+		t[1] += +Math.sin(r / 180.0 * Math.PI);
+		t[2] += -Math.sin(r / 180.0 * Math.PI);
 		
+        t[4] = ox;
+        t[5] = oy;
+
 		return new DOMMatrix(t);
 	}
+
+    breakPatternTransform(a, b, c, d, e, f)
+    {
+        var result = { ox: 0.0, oy: 0.0, fx: 1.0, fy: 1.0, sx: 0.0, sy: 0.0, r: 0.0 };
+
+        var tan_psi = 0;
+
+        if (Math.abs(b) < Math.abs(c))  // Shear is in Y
+        {
+            tan_psi = b / (c != 0 ? -c : 1);    console.log(b, -c, tan_psi);
+            b /= (tan_psi > 0 ? tan_psi : 1.0); console.log(b);
+            result.sy = Math.atan(tan_psi);     console.log(result.sy);
+        } else {
+            tan_psi = -c / (b != 0 ? b : 1);    console.log(-c, b, tan_psi);
+            c /= (tan_psi > 0 ? tan_psi : 1.0); console.log(c);
+            result.sx = Math.atan(tan_psi);     console.log(result.sx);
+        }
+
+        var sin_phi = b;
+        
+        result.r = Math.asin(sin_phi);          console.log(sin_phi, result.r);
+
+        var cos_phi = Math.cos(result.r);       console.log(cos_phi);
+
+        result.fx = a / cos_phi;
+        result.fy = d / cos_phi;
+
+        result.ox = e;
+        result.oy = f;
+
+        return result;
+    }
 
     onSerialError(eventSender, error) {
         this.fireEvent(REMevents.ERROR_OCCURRED, error)
@@ -364,7 +412,7 @@ class REMinterface {
             
             this.onChunkReceived();
 
-            if (this.count >= this.register[10].val * this.register[11].val)
+            if (this.count >= this.register[8].val * this.register[9].val)
             {
                 this.mode = "cmd";
                 this.onImageReceived();
@@ -375,8 +423,8 @@ class REMinterface {
     onChunkReceived()
     {
         this.fireEvent(REMevents.CHUNK_RECEIVED, {
-            h: this.register[11].val,
-            w: this.register[10].val,
+            h: this.register[9].val,
+            w: this.register[8].val,
             image: this.image
         });
     }
@@ -384,8 +432,8 @@ class REMinterface {
     onImageReceived()
     {
         this.fireEvent(REMevents.IMAGE_RECEIVED, {
-            h: this.register[11].val,
-            w: this.register[10].val,
+            h: this.register[9].val,
+            w: this.register[8].val,
             image: this.image
         });
     }
@@ -396,6 +444,12 @@ function sleep(ms) {
 }
 
 function dec2hex(d, padding) {
+
+    d = Number(d);
+
+    if (d < 0)
+        d += 16**padding;
+
     var hex = Number(d).toString(16);
     padding = typeof (padding) === "undefined" || padding === null ? padding = 2 : padding;
 
@@ -407,5 +461,5 @@ function dec2hex(d, padding) {
 }
 
 function clamp(v, min, max) {
-  return Math.min(Math.max(v, min), max);
+  return Math.min(Math.max(v, min), max).toFixed(0);
 };
