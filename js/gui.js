@@ -2,7 +2,7 @@ const rem = new REMinterface();
 
 rem.on(REMevents.CONNECTION_OPENED, onConnectionOpened);
 rem.on(REMevents.CONNECTION_CLOSED, onConnectionClosed);
-//rem.on(REMevents.REGISTER_CHANGE, onRegisterChange);
+rem.on(REMevents.PATTERN_CHANGE, onPatternChange);
 rem.on(REMevents.IMAGE_RECEIVED, onImageReceived);
 rem.on(REMevents.CHUNK_RECEIVED, onChunkReceived);
 rem.on(REMevents.ERROR_OCCURRED, onErrorOccurred);
@@ -17,32 +17,24 @@ var registers = [];
 var transforms = [];
 var transformation = {};
 
+var capture_metadata = {};
+var captures = [];
+
 var startTime = 0;
 var stopTime = 0;
-
-makeDraggable(document.querySelector('#message'));
-makeDraggable(document.querySelector('#image'));
-makeDraggable(document.querySelector('#pattern'));
-makeDraggable(document.querySelector('#digitize'));
-makeDraggable(document.querySelector('#register'));
-makeDraggable(document.querySelector('#control'));
 
 var pat_fill_canvas = document.createElement("canvas");
 pat_fill_canvas.width = 10;
 pat_fill_canvas.height = 10;
 var pat_fill_ctx = pat_fill_canvas.getContext("2d");
 
-let pat_fill_gradient = pat_fill_ctx.createLinearGradient(0, 0, pat_fill_canvas.width, pat_fill_canvas.height);
+let pat_fill_gradient = pat_fill_ctx.createLinearGradient(0, 0, 0, pat_fill_canvas.height);
 
 const colorStops = [
         [0, 'white'],
-        [0.35, 'white'],
-        [0.35, 'red'],
-        [0.5, 'red'],
         [0.5, 'white'],
-        [0.85, 'white'],
-        [0.85, 'red'],
-        [1, 'red']
+        [0.5, 'red'],
+        [1.0, 'red']
 ];
 
 colorStops.forEach(element => {
@@ -56,8 +48,6 @@ let pat_fill = pat_fill_ctx.createPattern(pat_fill_canvas, 'repeat');
 
 window.addEventListener("load", (event) =>
 {
-	//test();
-	
     var inputs = document.getElementById("register-list");
     
     for (var nr = 0; nr < REMregisterCount; ++nr)
@@ -94,14 +84,17 @@ window.addEventListener("load", (event) =>
             inputs.appendChild(row);
 
             rem.onRegisterChange(nr, onRegisterChange);
-
+            
             if ((8  <= nr && nr <= 11) ||
 		        (20 <= nr && nr <= 25))
 		    {
     			rem.onRegisterChange(nr, drawPattern);
 		    }
+            
         }
     }
+
+    initWindows();
 
     registers = document.querySelectorAll("[data-register]");
 
@@ -116,107 +109,10 @@ window.addEventListener("load", (event) =>
         transform.addEventListener("change", onTransformChangeUser);
     });
     
-/*	
-    pat_params = document.querySelectorAll("input[id^='pattern-']");
-    dig_params = document.querySelectorAll("select[id^='digitize-']");
-	
-    pat_params.forEach((pat_param) => {
-        pat_param.addEventListener("change", onPatParamChangeUser);
-    });
+    document.getElementById("store-button").onclick = onStoreButtonClick;
 
-    dig_params.forEach((dig_param) => {
-        dig_param.addEventListener("change", onDigParamChangeUser);
-    });
-*/		
-	drawPattern();
-	
+	drawGrid();
 });
-
-function test()
-{
-	// For Testing
-	
-	rem.register[8].val = 1024;
-	rem.register[9].val = 2048;
-	
-	rem.register[10].val = 256;
-	rem.register[11].val = 256;
-	
-	rem.register[12].val = 127;
-	rem.register[13].val = 127;
-	
-	rem.register[20].val = 0x4000;
-	rem.register[23].val = 0x4000;
-}
-
-function drawPattern()
-{
-    const scale = 256;
-
-	var h = pat_canvas.height;
-	var w = pat_canvas.width;
-	
-	pat_ctx.clearRect(0, 0, w, h);
-	pat_ctx.lineWidth = 1;
-	
-	// Draw Grid
-	for (var x = 0; x < w; x += 16)
-	{
-	  pat_ctx.moveTo(x, 0);
-	  pat_ctx.lineTo(x, h);
-	}
-
-	for (var y = 0; y < h; y += 16)
-	{
-	  pat_ctx.moveTo(0, y);
-	  pat_ctx.lineTo(w, y);
-
-	}
-	pat_ctx.strokeStyle = '#666666';
-    pat_ctx.stroke();
-	
-	// Draw Pattern
-    pat_ctx.save();
-
-    var t = rem.getPatternTransform();
-    t.e /= scale;
-    t.f /= scale;
-
-	pat_ctx.setTransform(t);
-
-	var rect = rem.getPatternRect();
-
-	pat_ctx.globalAlpha = 0.4;
-    pat_ctx.fillStyle = pat_fill;    
-	pat_ctx.fillRect(rect.x/scale, rect.y/scale, rect.w/scale, rect.h/scale);
-	pat_ctx.globalAlpha = 1.0;
-	
-	pat_ctx.beginPath();
-	pat_ctx.lineWidth = 1;
-	pat_ctx.strokeStyle = '#ffffff';
-	pat_ctx.rect(rect.x/scale, rect.y/scale, rect.w/scale, rect.h/scale);
-	pat_ctx.stroke();
-
-    pat_ctx.restore();
-    // Update Scale/Skew/Rotation
-
-    console.log(".");
-}
-
-async function onTransformChangeUser(event)
-{
-    var t = rem.makePatternTransform(
-        (transformation.ox ? transformation.ox.value : 0.0),
-        (transformation.oy ? transformation.oy.value : 0.0),
-        (transformation.fx ? transformation.fx.value : 1.0),
-        (transformation.fy ? transformation.fy.value : 1.0),
-        (transformation.sx ? transformation.sx.value : 0.0),
-        (transformation.sy ? transformation.sy.value : 0.0),
-        (transformation.r  ? transformation.r.value  : 0.0),
-    );
-
-    await rem.setPatternTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-}
 
 async function onConnectButtonClick() {
     await rem.connect();
@@ -231,8 +127,26 @@ async function onScanButtonClick() {
     document.getElementById("abort-button").disabled = false;
     document.getElementById("progress-bar").value = 0;
 
-    img_canvas.width = rem.getImageWidth();
-    img_canvas.height = rem.getImageHeight();
+    img_canvas.width = await rem.getImageWidth();
+    img_canvas.height = await rem.getImageHeight();
+
+    capture_metadata.time    = Date.now();
+    capture_metadata.subject = document.getElementById("capture-subject").value;
+    capture_metadata.voltage = document.getElementById("capture-voltage").value;
+    capture_metadata.magnifi = document.getElementById("capture-magnifi").value;
+    capture_metadata.comment = document.getElementById("capture-comment").value;
+    capture_metadata.width   = img_canvas.width;
+    capture_metadata.height  = img_canvas.height;
+    capture_metadata.depth   = await rem.getImageDepth();
+
+    if (capture_metadata.subject == "")
+        capture_metadata.subject = "untitled";
+
+    if (capture_metadata.voltage == "")
+        capture_metadata.voltage = "??";
+
+    if (capture_metadata.magnifi == "")
+        capture_metadata.magnifi = "??";
 
     startTime = performance.now();
 
@@ -268,6 +182,92 @@ function onErrorOccurred(eventSender, error)
     msg.childNodes[3].innerHTML = error;
 
     console.log(error);
+}
+
+function onPatternChange(eventSender, data)
+{
+    drawPattern();
+}
+
+async function onTransformChangeUser(event)
+{
+    var t = rem.makePatternTransform(
+        (transformation.ox ? transformation.ox.value : 0.0),
+        (transformation.oy ? transformation.oy.value : 0.0),
+        (transformation.fx ? transformation.fx.value : 1.0),
+        (transformation.fy ? transformation.fy.value : 1.0),
+        (transformation.sx ? transformation.sx.value : 0.0),
+        (transformation.sy ? transformation.sy.value : 0.0),
+        (transformation.r  ? transformation.r.value  : 0.0),
+    );
+
+    await rem.setPatternTransform(t.a, t.b, t.c, t.d, t.e, t.f);
+}
+
+function drawGrid()
+{
+    var h = pat_canvas.height;
+	var w = pat_canvas.width;
+	
+	pat_ctx.clearRect(0, 0, w, h);
+	pat_ctx.lineWidth = 1;
+	
+	// Draw Grid
+	for (var x = 0; x < w; x += 16)
+	{
+	  pat_ctx.moveTo(x, 0);
+	  pat_ctx.lineTo(x, h);
+	}
+
+	for (var y = 0; y < h; y += 16)
+	{
+	  pat_ctx.moveTo(0, y);
+	  pat_ctx.lineTo(w, y);
+
+	}
+	pat_ctx.strokeStyle = '#666666';
+    pat_ctx.stroke();
+}
+
+function drawPattern()
+{
+    const scale = 256;
+
+    drawGrid();
+
+    var m = rem.getPatternTransform();
+    var t = rem.breakPatternTransform(m.a, m.b, m.c, m.d, m.e, m.f);
+
+    // Update Scale/Skew/Rotation
+    transformation.ox.value = t.ox;
+    transformation.oy.value = t.oy;
+    transformation.fx.value = t.fx;
+    transformation.fy.value = t.fy;
+    transformation.sx.value = t.sx;
+    transformation.sy.value = t.sy;
+    transformation.r.value  = t.r;
+
+    pat_ctx.save();
+
+    m.e /= scale;
+    m.f /= scale;
+
+	pat_ctx.setTransform(m);
+
+	var rect = rem.getPatternRect();
+
+	pat_ctx.globalAlpha = 0.5;
+    pat_ctx.fillStyle = pat_fill;    
+	pat_ctx.fillRect(rect.x/scale, rect.y/scale, rect.w/scale, rect.h/scale);
+	pat_ctx.globalAlpha = 1.0;
+	
+	pat_ctx.beginPath();
+	pat_ctx.lineWidth = 1;
+	pat_ctx.strokeStyle = '#ffffff';
+	pat_ctx.rect(rect.x/scale, rect.y/scale, rect.w/scale, rect.h/scale);
+	pat_ctx.stroke();
+
+    pat_ctx.restore();
 }
 
 function onRegisterChange(eventSender, nr)
@@ -321,18 +321,12 @@ async function onRegisterChangeUser(event)
         if (range.length == 1)
         {
             var mask = 1 << range[0];
-
-            console.log(val, range, mask, new_val);
-
             new_val &=~mask;
             new_val |= (val & 1) << range[0];
         }
         else if (range.length == 2)
         {
             var mask = (2**(range[0]-range[1]) - 1);
-
-            console.log(val, range, mask, new_val);
-
             new_val &=~mask;
             new_val |= (val & mask) << range[1];
         }
@@ -357,6 +351,7 @@ function onImageReceived(eventSender, data)
 
     document.getElementById("abort-button").disabled = true;
     document.getElementById("scan-button").disabled = false;
+    document.getElementById("store-button").disabled = false;
 
     displayImage(data);
 }
@@ -381,6 +376,72 @@ function displayImage(data)
     
     img.data.set(dataRGBA);
     img_ctx.putImageData(img, 0, 0);
+}
+
+function onStoreButtonClick(e)
+{
+    var img = document.createElement("img");
+    img.src = img_canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+    
+    for (const [key, value] of Object.entries(capture_metadata))
+        img.dataset[key] = value;
+        
+    img.ondblclick = onDownloadImage;
+
+    var td_img = document.createElement("td");
+    td_img.appendChild(img);
+
+    var td_meta = document.createElement("td");
+    td_meta.innerHTML = `
+    <table>
+    <tr><td>Time</td><td>:</td><td>${formatDate(capture_metadata.time)}</td></tr>
+    <tr><td>Subject</td><td>:</td><td>${capture_metadata.subject}</td></tr>
+    <tr><td>Voltage</td><td>:</td><td>${capture_metadata.voltage} kV</td></tr>
+    <tr><td>Mag.</td><td>:</td><td>${capture_metadata.magnifi} x</td></tr>
+    <tr><td>Size</td><td>:</td><td>${capture_metadata.height}x${capture_metadata.width}@${capture_metadata.depth}bpp</td></tr>
+    <tr><td>Comment</td><td>:</td><td>${capture_metadata.comment}</td></tr>
+    </table>
+    `;
+
+    var tr = document.createElement("tr");
+    tr.appendChild(td_img);
+    tr.appendChild(td_meta);
+
+    var captures_list = document.getElementById("captures-list");
+    captures_list.prepend(tr);
+
+    e.target.disabled = true;
+}
+
+function onDownloadImage(e)
+{
+    console.log(e.target);
+    
+    var a = document.createElement('a');
+    a.href = e.target.src;
+    a.download = formatDateFilename(e.target.dataset.time) + "_" + e.target.dataset.subject + "_" + e.target.dataset.magnifi + "x" + ".png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function formatDate(timestamp)
+{
+    var t = new Date(Number(timestamp));
+
+    return `${t.getDay()}.${t.getMonth()}.${t.getFullYear()} ${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
+}
+
+function formatDateFilename(timestamp)
+{
+    var t = new Date(Number(timestamp));
+
+    return `${pad(t.getYear())}${pad(t.getMonth())}${pad(t.getDay())}_${pad(t.getHours())}${pad(t.getMinutes())}${pad(t.getSeconds())}`;
+}
+
+function pad(v)
+{
+    return (v < 10 ? '0' + v : v);
 }
 
 function convertRGBA(src, dest)

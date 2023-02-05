@@ -9,12 +9,12 @@
 				content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
 			/>
 
-      <title>REM Scan</title>
+        <title>REM Scan</title>
 
-      <link rel="stylesheet" href="./css/style.css" />
-      <link rel="icon" type="image/x-icon" href="./img/favicon.ico">
-      <link rel="icon" type="image/png" sizes="32x32" href="./img/favicon-32x32.png">
-			<link rel="icon" type="image/png" sizes="16x16" href="./img/favicon-16x16.png">
+        <link rel="stylesheet" href="./css/style.css" />
+        <link rel="icon" type="image/x-icon" href="./img/favicon.ico">
+        <link rel="icon" type="image/png" sizes="32x32" href="./img/favicon-32x32.png">
+	    <link rel="icon" type="image/png" sizes="16x16" href="./img/favicon-16x16.png">
     </head>
     <body>
         <div id="rem">
@@ -22,6 +22,7 @@
                 <div class="window-top">
                     <span class="window-title">Message</span>
                     <span class="round close"></span>
+                    <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
                 </div>
@@ -31,13 +32,43 @@
             <div id="image" class="window">
                 <div class="window-top">
                     <span class="window-title">Image</span>
+                    <span class="round close"></span>
                     <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
+                    <table id="image-metadata">
+                        <tr>
+                            <td id="image-metadata-subject"></td>
+                            <td id="image-metadata-voltage"></td>
+                        </tr>
+                        <tr>
+                            <td id="image-metadata-magnification"></td>
+                            <td id="image-metadata-comment"></td>
+                        </tr>
+                    </table>
+
                     <canvas id="image-canvas" height="512" width="512"></canvas>
-					<div class="progress-box">
+
+                    <div class="progress-box">
                     	<div class="progress-bar" id="progress-bar">0%</div>
                     </div>
+
+                    <button id="store-button" disabled>Store</button>
+                </div>
+                <div class="window-footer">
+                </div>
+            </div>
+
+            <div id="capture" class="window">
+                <div class="window-top">
+                    <span class="window-title">Captures</span>
+                    <span class="round close"></span>
+                    <span class="round minimize"></span>
+                </div>
+                <div class="window-content">
+                    <table id="captures-list">
+                        
+                    </table>
                 </div>
                 <div class="window-footer">
                 </div>
@@ -46,48 +77,76 @@
             <div id="pattern" class="window">
                 <div class="window-top">
                     <span class="window-title">Pattern</span>
+                    <span class="round close"></span>
                     <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
-                    <canvas id="pattern-canvas" height="256" width="256"></canvas>
-					<div id="pattern-parameter">
-					<table>
-					<tr>
-						<td><label for="pattern-size-x">Width</label></td>
-						<td><input id="pattern-size-x" type="number" min="0" max="65536" data-register="8"></input></td>
-						<td><label for="pattern-size-y">Height</label></td>
-						<td><input id="pattern-size-y" type="number" min="0" max="65536" data-register="9"></input></td>
-					</tr>
-					<tr>
-						<td><label for="pattern-step-x">Step X</label></td>
-						<td><input id="pattern-step-x" type="number" min="1" max="4096" data-register="10"></input></td>
-						<td><label for="pattern-step-y">Step Y</label></td>
-						<td><input id="pattern-step-y" type="number" min="1" max="4096"  data-register="11"></input></td>
-					</tr>
-					<tr>	
-						<td><label for="pattern-offset-x">Offset X</label></td>
-						<td><input id="pattern-offset-x" type="number" min="0" max="65536" data-transform="ox"></input></td>
-						<td><label for="pattern-offset-y">Offset Y</label></td>
-						<td><input id="pattern-offset-y" type="number" min="0" max="65536" data-transform="oy"></input></td>
-					</tr>
-					<tr>	
-						<td><label for="pattern-scale-x">Scale X</label></td>
-						<td><input id="pattern-scale-x" type="number" min="0" max="2" step="0.1" data-transform="fx"></input></td>
-						<td><label for="pattern-scale-y">Scale Y</label></td>
-						<td><input id="pattern-scale-y" type="number" min="0" max="2" step="0.1" data-transform="fy"></input></td>
-					</tr>
-					<tr>	
-						<td><label for="pattern-skew-x">Skew X</label></td>
-						<td><input id="pattern-skew-x" type="number" min="-20" max="20" data-transform="sx"></input></td>
-						<td><label for="pattern-skew-y">Skew Y</label></td>
-						<td><input id="pattern-skew-y" type="number" min="-20" max="20" data-transform="sy"></input></td>
-					</tr>
-					<tr>	
-						<td><label for="pattern-rotation">Rotation</label></td>
-						<td><input id="pattern-rotation" type="number" min="-180" max="180" data-transform="r"></input></td>
-					</tr>
-					</table>
-					</div>
+                    <table id="pattern-parameter">
+                        <tr>
+                            <td><canvas id="pattern-canvas" height="256" width="256"></canvas></td>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><label for="pattern-size-x">Width</label></td>
+                                        <td><input id="pattern-size-x" type="number" min="0" max="65536" data-register="8"></input></td>
+                                        <td><label for="pattern-size-y">Height</label></td>
+                                        <td><input id="pattern-size-y" type="number" min="0" max="65536" data-register="9"></input></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label for="pattern-step-x">Step X</label></td>
+                                        <td><input id="pattern-step-x" type="number" min="1" max="4096" data-register="10"></input></td>
+                                        <td><label for="pattern-step-y">Step Y</label></td>
+                                        <td><input id="pattern-step-y" type="number" min="1" max="4096"  data-register="11"></input></td>
+                                    </tr>
+                                    <tr>	
+                                        <td><label for="pattern-offset-x">Offset X</label></td>
+                                        <td><input id="pattern-offset-x" type="number" min="0" max="65536" data-transform="ox"></input></td>
+                                        <td><label for="pattern-offset-y">Offset Y</label></td>
+                                        <td><input id="pattern-offset-y" type="number" min="0" max="65536" data-transform="oy"></input></td>
+                                    </tr>
+                                    <tr>	
+                                        <td><label for="pattern-scale-x">Scale X</label></td>
+                                        <td><input id="pattern-scale-x" type="number" min="-2" max="2" step="0.1" data-transform="fx"></input></td>
+                                        <td><label for="pattern-scale-y">Scale Y</label></td>
+                                        <td><input id="pattern-scale-y" type="number" min="-2" max="2" step="0.1" data-transform="fy"></input></td>
+                                    </tr>
+                                    <tr>	
+                                        <td><label for="pattern-skew-x">Skew X</label></td>
+                                        <td><input id="pattern-skew-x" type="number" min="-20" max="20" step="0.1" data-transform="sx"></input></td>
+                                        <td><label for="pattern-skew-y">Skew Y</label></td>
+                                        <td><input id="pattern-skew-y" type="number" min="-20" max="20" step="0.1" data-transform="sy"></input></td>
+                                    </tr>
+                                    <tr>	
+                                        <td><label for="pattern-rotation">Rotation</label></td>
+                                        <td><input id="pattern-rotation" type="number" min="-180" max="180" step="0.1" data-transform="r"></input></td>
+                                    </tr>
+                                </table>
+                            <hr>
+                                <table>
+                                    <tr>
+                                        <td><label for="timing-ctrl">Control to Scan Delay</label></td>
+                                        <td><input id="timing-ctrl" type="number" min="0" max="167" data-register="16"></input></td>
+                                        <td><label>ms</label></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label for="timing-init">Startposition Delay</label></td>
+                                        <td><input id="timing-init" type="number" min="0" max="655" data-register="17"></input></td>
+                                        <td><label>us</label></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label for="timing-row">Backtrace Time</label></td>
+                                        <td><input id="timing-row" type="number" min="0" max="655" data-register="19"></input></td>
+                                        <td><label>us</label></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label for="timing-col">Pixel Time</label></td>
+                                        <td><input id="timing-col" type="number" min="0" max="655" data-register="18"></input></td>
+                                        <td><label>us</label></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
                 <div class="window-footer">
                 </div>
@@ -96,6 +155,7 @@
 			<div id="digitize" class="window">
                 <div class="window-top">
                     <span class="window-title">Digitize</span>
+                    <span class="round close"></span>
                     <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
@@ -106,6 +166,7 @@
                             <option value="0">AD Converter</option>
                             <option value="1">Testimage</option>
                         </select></td>
+                        <td></td>
                     </tr>
 					<tr>
 						<td><label for="digitize-channel">Channel</label></td>
@@ -113,6 +174,7 @@
 							<option value="0">0: n/a</option>
 							<option value="1">1: SEV</option>
 						</select></td>
+                        <td></td>
 					</tr>
 					<tr>
 						<td><label for="digitize-resolution">Resolution</label></td>
@@ -120,6 +182,7 @@
 							<option value="0">16 bit</option>
 							<option value="1">8 bit</option>
 						</select></td>
+                        <td></td>
 					</tr>
 					<tr>
 						<td><label for="digitize-testimage">Testimage</label></td>
@@ -133,7 +196,38 @@
                             <option value="6">X H / Y L</option>
                             <option value="7">X H / Y H</option>
 						</select></td>
+                        <td></td>
 					</tr>
+                    <tr>
+                        <td colspan="3"><hr></td>
+                    </tr>
+                        <tr>
+                            <td><label for="capture-subject">Subject</label></td>
+                            <td><input id="capture-subject" type="text" placeholder="Name of Subject"></input></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td><label for="capture-voltage">Voltage</label></td>
+                            <td><input id="capture-voltage" type="number" min="0" max="50" step="0.1" placeholder="10.0"></input></td>
+                            <td><label>kV</label></td>
+                        </tr>
+                        <tr>
+                            <td><label for="capture-magnifi">Magnification</label></td>
+                            <td><input id="capture-magnifi" type="number" min="0" max="20000" step="0.1" placeholder="100"></input></td>
+                            <td><label>x</label></td>
+                        </tr>
+                        <tr>
+                            <td><label for="capture-comment">Comment</label></td>
+                            <td><textarea id="capture-comment"></textarea></td>
+                            <td><label></label></td>
+                        </tr>
+                        </table>
+                    <hr>
+                    <table>
+                        <tr>
+                            <td><button id="scan-button" onclick="onScanButtonClick()" disabled>Scan</button></td>
+                            <td><button id="abort-button" onclick="onAbortButtonClick()" disabled>Abort</button></td>
+                        </tr>
                     </table>
                 </div>
                 <div class="window-footer"></div>
@@ -142,9 +236,10 @@
             <div id="register" class="window">
                 <div class="window-top">
                     <span class="window-title">Register</span>
-                    <span class="round minimize"></span>
+                    <span class="round close"></span>
+                    <span class="round maximize"></span>
                 </div>
-                <div class="window-content">
+                <div class="window-content minimized">
                     <table id="register-list">
                     </table>
                 </div>
@@ -154,19 +249,24 @@
             <div id="control" class="window">
                 <div class="window-top">
                     <span class="window-title">Control</span>
+                    <span class="round close"></span>
                     <span class="round minimize"></span>
                 </div>
                 <div class="window-content">
-                    <button id="connect-button" onclick="onConnectButtonClick()">Connect</button>
-                    <button id="init-button" onclick="onInitButtonClick()" disabled>Init</button>
-                    <button id="scan-button" onclick="onScanButtonClick()" disabled>Scan</button>
-                    <button id="abort-button" onclick="onAbortButtonClick()" disabled>Abort</button>
+                    <table>
+                        <tr>
+                            <td><button id="connect-button" onclick="onConnectButtonClick()">Connect</button></td>
+                            <td><button id="init-button" onclick="onInitButtonClick()" disabled>Init</button></td>
+                        </tr>
+                        
+                    </table>
                 </div>
                 <div class="window-footer"></div>
             </div>
             
         </div>
 
+        <script src="js/lib/math.min.js"></script>
         <script src="js/serial.js"></script>
         <script src="js/rem.js"></script>
         <script src="js/window.js"></script>

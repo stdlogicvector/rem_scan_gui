@@ -1,12 +1,12 @@
 const REMregisterCount = 32;
 
 const REMregisterMap = [
-    { use: true,  name: "Configuration", type: "bitfield", bits: [
+    { use: true,  name: "Configuration", type: "hex", bits: [
         {id: 0, name: "Channel 1" },
         {id: 1, name: "8-Bit" },
         {id: 2, name: "Test Image" }
     ] },
-    { use: true, name: "Test Img. Mode", type: "select", options: [
+    { use: true, name: "Test Img. Mode", type: "hex", options: [
         {id: 0, name: "RC Lo/Lo" },
         {id: 1, name: "RC Lo/Hi" },
         {id: 2, name: "RC Hi/Lo" },
@@ -61,6 +61,7 @@ const REMevents = Object.freeze({
     IMAGE_RECEIVED: Symbol("New Image received"),
     CHUNK_RECEIVED: Symbol("New Chunk received"),
     REGISTER_CHANGE: Symbol("Register Value changed"),
+    PATTERN_CHANGE: Symbol("Scan Pattern changed"),
     ERROR_OCCURRED: Symbol("An Error occurred")
 })
 
@@ -75,6 +76,7 @@ class REMinterface {
             REMevents.IMAGE_RECEIVED,
             REMevents.CHUNK_RECEIVED,
             REMevents.REGISTER_CHANGE,
+            REMevents.PATTERN_CHANGE,
             REMevents.ERROR_OCCURRED
         ]);
   
@@ -119,15 +121,11 @@ class REMinterface {
     }
 
     fireEvent(event, data = null) {
-        reg: if (event == REMevents.REGISTER_CHANGE && 0 <= data && data <= REMregisterCount)
+        if (event == REMevents.REGISTER_CHANGE && 0 <= data && data <= REMregisterCount)
         {
-            console.log(data, this.silent);
-
-            //if (this.silent)
-                //break reg;
-
-            for (let callback of this.register[data].listeners)
-                callback(this, data);
+            if (!this.silent)
+                for (let callback of this.register[data].listeners)
+                    callback(this, data);
         }
         
         if (this.events.has(event))
@@ -144,7 +142,7 @@ class REMinterface {
             stopBits: 1,
             parity: "none",
             flowControl: "none",
-            bufferSize: 4096
+            bufferSize: 8192
         };
         
         if (navigator.serial) {
@@ -167,7 +165,7 @@ class REMinterface {
     }
 
     async command(cmd, wait=true) {
-        console.log("Sending Command " + cmd);
+        console.log("Command  " + cmd);
         await this.serial.write(cmd);
 
         while (wait)
@@ -176,12 +174,15 @@ class REMinterface {
             if (this.response_buffer.length > 0)
             {
                 const response = this.response_buffer.pop();
+
+                console.log("Response " + response);
+
                 return response;
             }
         }
     }
 
-    async readRegister(nr)
+    async readRegister(nr, silent=false)
     {
         if (!this.serial.isOpen()) 
             return false;
@@ -196,12 +197,16 @@ class REMinterface {
         {
             var val = parseInt(regval[1], 16);
 
+            if (REMregisterMap[nr].type == "signed" && (val & 0x8000))
+                val -= 0x10000;                
+
             this.register[nr].val = val;
 
             if (this.register[nr].val != val || this.register[nr].inited == false)
             {
                 this.register[nr].inited = true;
-                this.fireEvent(REMevents.REGISTER_CHANGE, nr);
+                if (!silent)
+                    this.fireEvent(REMevents.REGISTER_CHANGE, nr);
             }
 
             return this.register[nr].val;
@@ -209,7 +214,7 @@ class REMinterface {
             return undefined;        
     }
 
-    async writeRegister(nr, val)
+    async writeRegister(nr, val, silent=false)
     {
         if (!this.serial.isOpen()) 
             return false;
@@ -222,7 +227,7 @@ class REMinterface {
 
             this.register[nr].val = val;
 
-            if (old_val != val)
+            if (!silent && old_val != val)
                 this.fireEvent(REMevents.REGISTER_CHANGE, nr);
 
             return true;
@@ -261,19 +266,36 @@ class REMinterface {
             return false;
 
         for (var nr = 0; nr < REMregisterCount; ++nr)
-        {
             await this.readRegister(nr);
-        }
+
+        this.fireEvent(REMevents.PATTERN_CHANGE, 0);
     }
 	
-    getImageWidth()
+    async getImageWidth()
     {
+        if (!this.register[8].inited)
+            await this.readRegister(8);
+
         return this.register[8].val;
     }
 
-    getImageHeight()
+    async getImageHeight()
     {
+        if (!this.register[9].inited)
+            await this.readRegister(9);
+
         return this.register[9].val;
+    }
+
+    async getImageDepth()
+    {
+        if (!this.register[0].inited)
+            await this.readRegister(0);
+
+        if (this.register[0].val & (1 << 1))
+            return 8;
+        else
+            return 16;
     }
 
 	getPatternRect()
@@ -291,7 +313,6 @@ class REMinterface {
 		var reg = 8;
 		for (const arg in arguments)
 		{	
-            this.silent = (arg < 3);
 			await this.writeRegister(reg, clamp(arguments[arg],  REMregisterMap[reg].min, REMregisterMap[reg].max));
             reg++;
 		}
@@ -315,69 +336,86 @@ class REMinterface {
 		{	
 			var v = clamp(arguments[arg] * REMregisterMap[reg].div, REMregisterMap[reg].min, REMregisterMap[reg].max);
 
-            this.silent = (arg < 5);
-			await this.writeRegister(reg, v);
+    		await this.writeRegister(reg, v, false);
 			reg++;
 		}
+        
+        this.fireEvent(REMevents.PATTERN_CHANGE, 0);
 	}
 	
 	makePatternTransform(ox, oy, fx, fy, sx, sy, r)
 	{
 		// a c e
 		// b d f
-		// 		  0  1  2  3  4  5
-		//        a  b  c  d  e  f
-		var t = [ 1, 0, 0, 1, 0, 0 ];
-		
-		// Scale
-        t[0] *= fx;	
-		t[3] *= fy;
-		
-		// Skew
-		t[1] += Math.tan(sy / 180.0 * Math.PI);
-		t[2] += Math.tan(sx / 180.0 * Math.PI);
-		
-		// Rotate
-		t[0] *= Math.cos(r / 180.0 * Math.PI);
-		t[3] *= Math.cos(r / 180.0 * Math.PI);
-		
-		t[1] += +Math.sin(r / 180.0 * Math.PI);
-		t[2] += -Math.sin(r / 180.0 * Math.PI);
-		
-        t[4] = ox;
-        t[5] = oy;
 
-		return new DOMMatrix(t);
+        const f = [
+            [ fx,  0,  0],
+            [  0, fy,  0],
+            [  0,  0,  1],
+        ];
+
+        const s = [
+            [  1,  Math.tan(sx / 180.0 * Math.PI),  0],
+            [  Math.tan(sy / 180.0 * Math.PI),  1,  0],
+            [  0,  0,  1],
+        ];
+
+        const w = r / 180.0 * Math.PI;
+
+        const a = [
+            [  +Math.cos(w),  -Math.sin(w),  0],
+            [  +Math.sin(w),  +Math.cos(w),  0],
+            [  0,  0,   1],
+        ];
+
+        const o = [
+            [  0,  0,  ox],
+            [  0,  0,  oy],
+            [  0,  0,   0],
+        ];
+		
+        const fs = math.multiply(f, s);
+        const fsa = math.multiply(fs, a);
+        const fsao = math.add(fsa, o);
+
+		return new DOMMatrix([
+            fsao[0][0],
+            fsao[1][0],
+            fsao[0][1],
+            fsao[1][1],
+            fsao[0][2],
+            fsao[1][2]
+        ]);
 	}
 
     breakPatternTransform(a, b, c, d, e, f)
     {
+        /*
+        11 21 31
+        12 22 32
+
+         a  c  e
+         b  d  f
+        */
+
+        console.log(arguments);
+
         var result = { ox: 0.0, oy: 0.0, fx: 1.0, fy: 1.0, sx: 0.0, sy: 0.0, r: 0.0 };
 
-        var tan_psi = 0;
-
-        if (Math.abs(b) < Math.abs(c))  // Shear is in Y
-        {
-            tan_psi = b / (c != 0 ? -c : 1);    console.log(b, -c, tan_psi);
-            b /= (tan_psi > 0 ? tan_psi : 1.0); console.log(b);
-            result.sy = Math.atan(tan_psi);     console.log(result.sy);
-        } else {
-            tan_psi = -c / (b != 0 ? b : 1);    console.log(-c, b, tan_psi);
-            c /= (tan_psi > 0 ? tan_psi : 1.0); console.log(c);
-            result.sx = Math.atan(tan_psi);     console.log(result.sx);
-        }
-
-        var sin_phi = b;
-        
-        result.r = Math.asin(sin_phi);          console.log(sin_phi, result.r);
-
-        var cos_phi = Math.cos(result.r);       console.log(cos_phi);
-
-        result.fx = a / cos_phi;
-        result.fy = d / cos_phi;
-
+        // Translation
         result.ox = e;
         result.oy = f;
+
+        // Scaling
+        result.fx = Math.sqrt(a*a + b*b).toFixed(2);
+        result.fy = Math.sqrt(c*c + d*d).toFixed(2);
+
+        result.r = Math.atan2(b, a);
+        result.r = (result.r / Math.PI * 180.0).toFixed(2);
+
+        // https://stackoverflow.com/questions/45159314/decompose-2d-transformation-matrix
+        // https://theswissbay.ch/pdf/Gentoomen%20Library/Game%20Development/Programming/Graphics%20Gems%202.pdf
+
 
         return result;
     }

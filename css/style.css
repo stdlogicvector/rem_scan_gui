@@ -7,8 +7,15 @@ body {
     font-family: 'Courier New', Courier, monospace;
 }
 
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
 #message {
-    z-index: 99;
+    z-index: 999;
     top: 50%;
     left: calc(50% - 150px);
 	display: none;
@@ -16,19 +23,51 @@ body {
 }
 
 #image {
-    z-index: 1;
     top: 10px;
-    left: 10px;
+    left: 445px;
 }
 
 #image canvas {
 	border: 1px dotted #666;
 }
 
-#pattern {
-	z-index: 2;
+#image-metadata {
+	display: none;
+}
+
+#image button {
+	width: 100%;
+	height: 30px;
+	font-weight: bolder;
+	font-size: 12pt;
+	font-family: 'Courier New', Courier, monospace;
+	margin-top: 8px;
+}
+
+#capture {
     top: 10px;
-    left: 550px;
+    left: 10px;
+	min-height: 50px;
+}
+
+#capture .window-content {
+	overflow-y: auto;
+	max-height: 100vh;
+}
+
+#capture table {
+	width: 100%;
+	font-size: 10pt;
+}
+
+#capture img {
+	width: 96px;
+	height: 96px;
+}
+
+#pattern {
+    top: 630px;
+    left: 10px;
 }
 
 #pattern canvas {
@@ -46,9 +85,8 @@ body {
 }
 
 #digitize {
-	z-index: 3;
-    top: 500px;
-    left: 550px;
+    top: 630px;
+    left: 560px;
 }
 
 #digitize-parameter label
@@ -56,18 +94,45 @@ body {
 	font-size: 10pt;
 }
 
-#digitize select {
-	width: 168px;
+#digitize select
+{
+	width: 100%;
+}
+
+#digitize input,
+#digitize textarea
+{
+	float: right;
+}
+
+#digitize table {
+	width: 100%;
+}
+
+#digitize textarea {
+	resize: vertical;
+}
+
+#digitize button {
+	width: 100%;
+	height: 50px;
+	font-weight: bolder;
+	font-size: 12pt;
+	font-family: 'Courier New', Courier, monospace;
 }
 
 #control {
-    z-index: 5;
-    top: 660px;
-    left: 10px;
+    top: 870px;
+    left: 560px;
+	width: 278px;
+}
+
+#control table {
+	width: 100%;
 }
 
 #control button {
-	width: 85px;
+	width: 100%;
 	height: 50px;
 	font-weight: bolder;
 	font-size: 12pt;
@@ -75,9 +140,8 @@ body {
 }
 
 #register {
-    z-index: 4;
     top: 10px;
-    left: 835px;
+    left: 995px;
 }
 
 #register label
@@ -86,19 +150,13 @@ body {
 }
 
 #register input {
-    width: 45px;
+    width: 65px;
 }
 
 #register input:read-only {
     border: none;
 	background-color: transparent;
 	color: #fff;
-}
-
-#register input::-webkit-outer-spin-button,
-#register input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 .progress-box {
@@ -185,13 +243,24 @@ body {
 }
 
 .close {
-	background-color: #8d0000;
+	background-color: #b50000;
+}
+
+.closed {
+	display: none!important;
 }
 
 .minimize {
 	background-color: #008d00;
 }
 
+.minimized {
+	height: 0px;
+	padding-top: 0px;
+	padding-bottom: 0px;
+	overflow: hidden;
+}
+
 .maximize {
-	background-color: #8d4e00;
+	background-color: #e9c10f;
 }

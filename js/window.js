@@ -1,3 +1,24 @@
+var windows = [];
+
+function initWindows() {
+    windows = document.querySelectorAll(".window");
+    
+    windows.forEach((window) => {
+        makeDraggable(window);
+
+        let pos = localStorage.getItem("rem_window_pos-" + window.id);
+        
+        if (pos)
+        {
+            pos = pos.split(";");
+        
+            window.style.top  = pos[0] + 'px';
+            window.style.left = pos[1] + 'px';
+        }
+    });
+   
+}
+
 function makeDraggable (elmnt) {
     // Make an element draggable (or if it has a .window-top class, drag based on the .window-top element)
     let currentPosX = 0, currentPosY = 0, previousPosX = 0, previousPosY = 0;
@@ -34,42 +55,44 @@ function makeDraggable (elmnt) {
         previousPosX = e.clientX;
         previousPosY = e.clientY;
         // Set the element's new position
-        elmnt.style.top = (elmnt.offsetTop - currentPosY) + 'px';
-        elmnt.style.left = (elmnt.offsetLeft - currentPosX) + 'px';
+        let top = (elmnt.offsetTop - currentPosY);
+        let left = (elmnt.offsetLeft - currentPosX);
+
+        top = (top < 0  ? 0 : top);
+        top = (top > (window.innerHeight-50) ? (window.innerHeight-50) : top);
+
+        left = (left < 0  ? 0 : left);
+        left = (left > (window.innerWidth-50) ? (window.innerWidth-50) : left);
+
+        elmnt.style.top  = top  + 'px';
+        elmnt.style.left = left + 'px';
     }
 
-    function closeDragElement () {
-        // Stop moving when mouse button is released and release events
+    function closeDragElement (e) {
         document.onmouseup = null;
         document.onmousemove = null;
+
+        localStorage.setItem("rem_window_pos-" + elmnt.id, elmnt.offsetTop + ";" + elmnt.offsetLeft);
     }
 }
 for (const minMaxElement of document.querySelectorAll('.round')) {
 	minMaxElement.addEventListener('click', function (event) {
         var action = event.target.classList[1];
 		var window = event.target.parentNode.parentNode;
-        
       
         if (action == "close")
-            window.style.display = "none";
+            window.classList.add("closed");
 
         if (action == "minimize")
         {
-            window.childNodes[3].style.height = "0px";
-            window.childNodes[3].style.paddingTop = "0px";
-            window.childNodes[3].style.paddingBottom = "0px";
-            window.childNodes[3].style.overflow = "hidden";
-                
+            window.querySelector(".window-content").classList.add("minimized");
             event.target.classList.remove("minimize");
             event.target.classList.add("maximize");
         }
 
         if (action == "maximize")
         {
-            window.childNodes[3].style.height = "";
-            window.childNodes[3].style.paddingTop = "";
-            window.childNodes[3].style.paddingBottom = "";
-            window.childNodes[3].style.overflow = "";
+            window.querySelector(".window-content").classList.remove("minimized");            
             event.target.classList.remove("maximize");
             event.target.classList.add("minimize");
         }
