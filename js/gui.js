@@ -380,6 +380,8 @@ function displayImage(data)
 
 function onStoreButtonClick(e)
 {
+    var captures_list = document.getElementById("captures-list");
+
     var img = document.createElement("img");
     img.src = img_canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
     
@@ -387,6 +389,10 @@ function onStoreButtonClick(e)
         img.dataset[key] = value;
         
     img.ondblclick = onDownloadImage;
+
+    var td_nr = document.createElement("td");
+    
+    td_nr.innerHTML = "<span class='capture_nr'>" + (captures_list.childNodes.length + 1) + "</span>";
 
     var td_img = document.createElement("td");
     td_img.appendChild(img);
@@ -404,19 +410,19 @@ function onStoreButtonClick(e)
     `;
 
     var tr = document.createElement("tr");
+    tr.appendChild(td_nr);
     tr.appendChild(td_img);
     tr.appendChild(td_meta);
 
-    var captures_list = document.getElementById("captures-list");
     captures_list.prepend(tr);
 
     e.target.disabled = true;
 }
 
-function onDownloadImage(e)
+async function onDownloadImage(e)
 {
-    console.log(e.target);
-    
+    // https://github.com/hometlt/png-metadata
+
     var a = document.createElement('a');
     a.href = e.target.src;
     a.download = formatDateFilename(e.target.dataset.time) + "_" + e.target.dataset.subject + "_" + e.target.dataset.magnifi + "x" + ".png";

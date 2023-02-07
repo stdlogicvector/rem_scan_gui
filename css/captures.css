@@ -1,0 +1,28 @@
+#captures {
+	overflow-y: auto;
+	max-height: 100vh;
+}
+
+#captures .slideout-content {
+    width: 400px;
+}
+
+#captures-list {
+	width: 100%;
+	font-size: 10pt;
+}
+
+#captures-list:empty:before {
+	content: 'No Captures';
+}
+
+.capture_nr {
+	text-align: center;
+	font-size: 12pt;
+	width: 30px;
+}
+
+#captures-list img {
+	width: 128px;
+	height: 128px;
+}

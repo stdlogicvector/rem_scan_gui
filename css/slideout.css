@@ -1,0 +1,43 @@
+.slideout {
+    position: fixed;
+    top: 0;
+    height: 100%;
+
+    -webkit-transition-duration: 0.3s;
+    -moz-transition-duration: 0.3s;
+    -o-transition-duration: 0.3s;
+    transition-duration: 0.3s;
+}
+
+.slideout.left {
+	transform: translateX(-100%) translateX(20px);
+}
+
+.slideout.left:hover {
+    transform: translateX(0);
+}
+
+.slideout.show {
+	transform: translateX(0);
+}
+
+.slideout-tab {
+    width: 20px;
+    min-height: 100%;
+    background: #333;
+}
+
+.slideout.left .slideout-tab {
+    float: left;
+}
+
+.slideout-content {
+	background: #222;
+	color: #fff;
+	min-height: 100%;
+	padding: 0px 10px;
+}
+
+.slideout.left .slideout-content {
+    float: left;
+}

@@ -1,3 +1,8 @@
+@import "slideout.css";
+@import "windows.css";
+
+@import "captures.css";
+
 body {
     height: 100vh;
     width: 100wh;
@@ -12,7 +17,6 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 
 #message {
     z-index: 999;
@@ -42,27 +46,6 @@ input::-webkit-inner-spin-button {
 	font-size: 12pt;
 	font-family: 'Courier New', Courier, monospace;
 	margin-top: 8px;
-}
-
-#capture {
-    top: 10px;
-    left: 10px;
-	min-height: 50px;
-}
-
-#capture .window-content {
-	overflow-y: auto;
-	max-height: 100vh;
-}
-
-#capture table {
-	width: 100%;
-	font-size: 10pt;
-}
-
-#capture img {
-	width: 96px;
-	height: 96px;
 }
 
 #pattern {
@@ -174,93 +157,4 @@ input::-webkit-inner-spin-button {
 
 .window-footer .progress-box {
     width: 95%;
-}
-
-/* WINDOWS */
-
-.window {
-	position: fixed;
-	border-radius: 10px;
-	border: none;
-	box-shadow: 1px 1px 4px rgba(0,0,0,0,0.9), -1px 1px 4px rgba(0,0,0,0,0.9);
-	background: #fff;
-}
-
-.window-content {
-	background: #222;
-	color: #fff;
-	height: 100%;
-	padding: 10px;
-}
-
-.window-footer {
-	display: block;
-	width: calc(100% - 4px);
-	background-color: #444;
-  color: #888;
-  font-weight: 600;
-	border-bottom-right-radius: 5px;
-	border-bottom-left-radius: 5px;
-	padding: 8px 2px 2px 2px;
-	position: relative;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	outline: 0;
-  text-align: center;
-}
-
-.window-top, .window-top-no-bind {
-	cursor: move;
-	height: 20px;
-	border-bottom: 1px solid rgba(0,0,0,0.5);
-	border-top-right-radius: 5px;
-	border-top-left-radius: 5px;
-	padding: 5px;
-	background-color: #ddd;
-}
-
-.window-top-no-bind {
-	cursor: inherit;
-}
-
-.window-title {
-    text-align: left;
-    float: left;
-    font-weight: bolder;
-}
-
-.round {
-	display: block;
-	float: right;
-	height: 16px;
-	width: 16px;
-	border-radius: 50%;
-	border: none;
-	margin-right: 6px;
-	box-shadow: 1px 1px 2px #000;
-  	cursor: pointer;
-}
-
-.close {
-	background-color: #b50000;
-}
-
-.closed {
-	display: none!important;
-}
-
-.minimize {
-	background-color: #008d00;
-}
-
-.minimized {
-	height: 0px;
-	padding-top: 0px;
-	padding-bottom: 0px;
-	overflow: hidden;
-}
-
-.maximize {
-	background-color: #e9c10f;
 }

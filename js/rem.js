@@ -397,9 +397,6 @@ class REMinterface {
          a  c  e
          b  d  f
         */
-
-        console.log(arguments);
-
         var result = { ox: 0.0, oy: 0.0, fx: 1.0, fy: 1.0, sx: 0.0, sy: 0.0, r: 0.0 };
 
         // Translation
