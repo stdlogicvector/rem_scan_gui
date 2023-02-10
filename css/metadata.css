@@ -1,0 +1,13 @@
+#metadata table {
+	width: 100%;
+}
+
+#metadata input,
+#metadata textarea
+{
+	float: right;
+}
+
+#metadata textarea {
+	resize: vertical;
+}

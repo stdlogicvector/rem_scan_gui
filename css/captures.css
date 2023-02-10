@@ -1,6 +1,4 @@
 #captures {
-	overflow-y: auto;
-	max-height: 100vh;
 }
 
 #captures .slideout-content {
@@ -10,10 +8,13 @@
 #captures-list {
 	width: 100%;
 	font-size: 10pt;
+	border-collapse: collapse;
 }
 
 #captures-list:empty:before {
 	content: 'No Captures';
+	text-align: center;
+	font-weight: bold;
 }
 
 .capture_nr {
@@ -25,4 +26,10 @@
 #captures-list img {
 	width: 128px;
 	height: 128px;
+}
+
+
+#captures-list tr:hover,
+#captures-list tr.selected {
+	border: 1px solid #eee;
 }

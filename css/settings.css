@@ -1,0 +1,41 @@
+#settings {
+    text-align: center;
+}
+
+#settings .slideout-content {
+    width: 400px;
+}
+
+.settings-heading {
+    font-size: 20px;
+    font-weight: bold;
+    background-color: #555;
+    margin: 10px 0px 5px 0px;
+}
+
+#digitize-parameter,
+#pattern-parameter,
+#timing-parameter,
+#register-list {
+    width: 100%;
+    text-align: left;
+}
+
+#digitize-parameter select
+{
+	width: 100%;
+}
+
+#pattern-canvas {
+	border: 1px solid #666;
+}
+
+#pattern-parameter label
+{
+	font-size: 10pt;
+}
+
+#pattern-parameter input
+{
+	width: 80%;
+}

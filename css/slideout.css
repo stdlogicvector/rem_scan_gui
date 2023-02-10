@@ -1,7 +1,8 @@
 .slideout {
-    position: fixed;
+    position: relative;
     top: 0;
     height: 100%;
+    max-height: 100%;
 
     -webkit-transition-duration: 0.3s;
     -moz-transition-duration: 0.3s;
@@ -10,34 +11,86 @@
 }
 
 .slideout.left {
-	transform: translateX(-100%) translateX(20px);
+    float: left;
+	transform: translateX(-100%) translateX(30px);
 }
 
 .slideout.left:hover {
-    transform: translateX(0);
+    transform: translateX(-100%) translateX(45px);
 }
 
-.slideout.show {
+.slideout.right {
+    float: right;
+	transform: translateX(100%) translateX(-30px);
+}
+
+.slideout.right:hover {
+    transform: translateX(100%) translateX(-45px);
+}
+
+.slideout.show,
+.slideout.show:hover {
+    z-index: 99;
 	transform: translateX(0);
 }
 
 .slideout-tab {
-    width: 20px;
+    width: 30px;
+    font-size: 15px;
     min-height: 100%;
     background: #333;
+    text-align: center;
+    cursor: pointer;
+}
+
+.slideout-tab-mark {
+    font-size: 20px;
+    font-weight: bold;
+    color: #eee;
+    pointer-events: none;
+}
+
+.slideout.left .slideout-tab-mark::before,
+.slideout.right.show .slideout-tab-mark::before {
+    content: ">";
+}
+
+.slideout.right .slideout-tab-mark::before,
+.slideout.left.show .slideout-tab-mark::before {
+    content: "<";
+}
+
+.slideout-title {
+    width: 75%;
+    padding-top: 20px;
+    text-orientation: upright;
+    writing-mode: vertical-rl;
+    text-align: center;
+    font-weight: bold;
+    color: #eee;
+    pointer-events: none;
 }
 
 .slideout.left .slideout-tab {
     float: left;
 }
 
+.slideout.right .slideout-tab {
+    float: right;
+}
+
 .slideout-content {
 	background: #222;
-	color: #fff;
-	min-height: 100%;
+	color: #eee;
+	height: 100%;
 	padding: 0px 10px;
+    overflow-y: auto;
 }
 
 .slideout.left .slideout-content {
     float: left;
+}
+
+.slideout.right .slideout-content {
+    float: right;
 }
