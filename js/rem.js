@@ -1,10 +1,17 @@
 const REMregisterCount = 32;
 
+// GND  : 1,9,12
+// X    : 10
+// Y    : 13
+// C    : 20
+// V    : 2
+
 const REMregisterMap = [
     { use: true,  name: "Configuration", type: "hex", bits: [
         {id: 0, name: "Channel 1" },
         {id: 1, name: "8-Bit" },
-        {id: 2, name: "Test Image" }
+        {id: 2, name: "Test Image" },
+        {id: 3, name: "Averaging" }
     ] },
     { use: true, name: "Test Img. Mode", type: "hex", options: [
         {id: 0, name: "RC Lo/Lo" },
@@ -17,27 +24,27 @@ const REMregisterMap = [
         {id: 7, name: "XY Hi/Hi" },
         {id: 8, name: "0x55AA" }
     ] },
-    { use: false },
-    { use: false },
+    { use: true, name: "Averaging Count", type: "unsigned", min: 0, max: 2**8-1 },
+    { use: true, name: "Averaging Delay", type: "unsigned", min: 0, max: 2**16-1, unit: "ms", mult: 0.01 },
     { use: false },
     { use: false },
     { use: false },
     { use: false },
     
-    { use: true,  name: "Steps X",  type: "unsigned", min: 1, max: 2^16-1 },
-    { use: true,  name: "Steps Y",  type: "unsigned", min: 1, max: 2^16-1 },
-    { use: true,  name: "Delta X",  type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
-    { use: true,  name: "Delta Y",  type: "unsigned", min: 0, max: 2^16-1, unit: "stp" },
+    { use: true,  name: "Steps X",  type: "unsigned", min: 1, max: 2**16-1 },
+    { use: true,  name: "Steps Y",  type: "unsigned", min: 1, max: 2**16-1 },
+    { use: true,  name: "Delta X",  type: "unsigned", min: 0, max: 2**16-1, unit: "stp" },
+    { use: true,  name: "Delta Y",  type: "unsigned", min: 0, max: 2**16-1, unit: "stp" },
     
     { use: false },
     { use: false },
     { use: false },
     { use: false },
 
-    { use: true,  name: "Ctrl. Delay", type: "unsigned", min: 0, max: 2^16-1, unit: "ms", mult: 0.00256 },
-    { use: true,  name: "Init Delay",  type: "unsigned", min: 0, max: 2^16-1, unit: "us", mult: 0.01 },
-    { use: true,  name: "Col. Delay",  type: "unsigned", min: 0, max: 2^16-1, unit: "us", mult: 0.01  },
-    { use: true,  name: "Row Delay",   type: "unsigned", min: 0, max: 2^16-1, unit: "us", mult: 0.01  },
+    { use: true,  name: "Ctrl. Delay", type: "unsigned", min: 0, max: 2**16-1, unit: "ms", mult: 0.00256 },
+    { use: true,  name: "Init Delay",  type: "unsigned", min: 0, max: 2**16-1, unit: "us", mult: 0.01 },
+    { use: true,  name: "Col. Delay",  type: "unsigned", min: 0, max: 2**16-1, unit: "us", mult: 0.01  },
+    { use: true,  name: "Row Delay",   type: "unsigned", min: 0, max: 2**16-1, unit: "us", mult: 0.01  },
 
     { use: true,  name: "Transform A", type: "signed", min: -(2**15), max: 2**15-1, div: 0x4000 },
     { use: true,  name: "Transform B", type: "signed", min: -(2**15), max: 2**15-1, div: 0x4000 },
@@ -98,7 +105,8 @@ class REMinterface {
         this.register = new Array(REMregisterCount).fill().map(() => {return new Object({val: 0, inited: false, listeners: [] });}); 
 
         this.chunk = null;
-        this.image = null;
+        this.image = {};
+        this.image.data = null;
         this.count = 0;
     }
 
@@ -158,6 +166,11 @@ class REMinterface {
         } else {
             alert('The Web Serial API is not supported on this browser.');
         }
+    }
+
+    connected()
+    {
+        return this.serial.isOpen();
     }
 
     async close() {
@@ -241,11 +254,19 @@ class REMinterface {
         if (!this.serial.isOpen()) 
             return false;
 
+        await this.readRegister(0);
         await this.readRegister(8);
         await this.readRegister(9);
 
-        this.count = 0;
-        this.image = [];
+        this.image.count = 0;
+        this.image.data = [];
+        this.image.height = this.register[9].val; 
+        this.image.width = this.register[8].val;
+
+        if (this.register[0].val & (1 << 1))
+            this.image.depth = 8;
+        else
+            this.image.depth = 16;
 
         this.mode = "data";
         this.command("{S}", false);
@@ -256,7 +277,7 @@ class REMinterface {
         if (!this.serial.isOpen()) 
             return false;
 
-        await this.command("{X}");
+        await this.command("{X}", false);
         this.mode = "cmd";
     }
 
@@ -437,40 +458,23 @@ class REMinterface {
             this.rx_buffer = responses.pop();
             this.response_buffer = this.response_buffer.concat(responses);
         } else {
-            var tmp = new Uint8Array(this.image.length + newData.length);
-            
-            tmp.set(this.image);
-            tmp.set(newData, this.image.length);
-            
-            this.image = tmp;
-            this.count += newData.length;
-            
-            this.onChunkReceived();
+            var tmp = new Uint8Array(this.image.data.length + newData.length);
+            //var tmp = new ArrayBuffer8(this.image.data.length + newData.length);
 
-            if (this.count >= this.register[8].val * this.register[9].val)
+            tmp.set(this.image.data);
+            tmp.set(newData, this.image.data.length);
+            
+            this.image.data = tmp;
+            this.image.count += newData.length;
+            
+            this.fireEvent(REMevents.CHUNK_RECEIVED, this.image);
+
+            if (this.image.count >= this.image.height * this.image.width * (this.image.depth/8))
             {
                 this.mode = "cmd";
-                this.onImageReceived();
+                this.fireEvent(REMevents.IMAGE_RECEIVED, this.image);
             }
         }
-    }
-
-    onChunkReceived()
-    {
-        this.fireEvent(REMevents.CHUNK_RECEIVED, {
-            h: this.register[9].val,
-            w: this.register[8].val,
-            image: this.image
-        });
-    }
-
-    onImageReceived()
-    {
-        this.fireEvent(REMevents.IMAGE_RECEIVED, {
-            h: this.register[9].val,
-            w: this.register[8].val,
-            image: this.image
-        });
     }
 }
 

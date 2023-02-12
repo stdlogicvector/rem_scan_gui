@@ -3,6 +3,13 @@
     top: 0;
     height: 100%;
     max-height: 100%;
+	
+	flex: 0 0 auto;
+
+	z-index: 99;
+
+	--tab-width: 30px;
+	--tab-peek: 15px;
 
     -webkit-transition-duration: 0.3s;
     -moz-transition-duration: 0.3s;
@@ -12,30 +19,29 @@
 
 .slideout.left {
     float: left;
-	transform: translateX(-100%) translateX(30px);
+	transform: translateX(-100%) translateX(var(--tab-width));
 }
 
 .slideout.left:hover {
-    transform: translateX(-100%) translateX(45px);
+    transform: translateX(-100%) translateX(calc(var(--tab-width) + var(--tab-peek)));
 }
 
 .slideout.right {
     float: right;
-	transform: translateX(100%) translateX(-30px);
+	transform: translateX(100%) translateX(calc(var(--tab-width) * -1));
 }
 
 .slideout.right:hover {
-    transform: translateX(100%) translateX(-45px);
+    transform: translateX(100%) translateX(calc(var(--tab-width) * -1 - var(--tab-peek)));
 }
 
 .slideout.show,
 .slideout.show:hover {
-    z-index: 99;
 	transform: translateX(0);
 }
 
 .slideout-tab {
-    width: 30px;
+    width: var(--tab-width);
     font-size: 15px;
     min-height: 100%;
     background: #333;
@@ -52,12 +58,12 @@
 
 .slideout.left .slideout-tab-mark::before,
 .slideout.right.show .slideout-tab-mark::before {
-    content: ">";
+    content: "\2192";
 }
 
 .slideout.right .slideout-tab-mark::before,
 .slideout.left.show .slideout-tab-mark::before {
-    content: "<";
+    content: "\2190";
 }
 
 .slideout-title {

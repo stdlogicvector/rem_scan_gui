@@ -28,8 +28,20 @@
 	height: 128px;
 }
 
+#captures-list tr {
+	border-width: 0px 2px 0px 2px;
+	border-style: solid;
+	border-color: transparent;
+}
 
-#captures-list tr:hover,
+#captures-list tr:hover {
+	border-color: #eee !important;
+}
+
 #captures-list tr.selected {
-	border: 1px solid #eee;
+	border-color: rgb(73, 89, 230) !important;
+}
+
+#captures-list tr.selected:hover {
+	border-color: rgb(230, 175, 73) !important;
 }

@@ -5,6 +5,11 @@ function initCapture()
 
 function onStoreButtonClick(e)
 {
+    var storebutton = document.getElementById("store-button");
+    
+    if (storebutton.disabled == true)
+        return;
+
     var captures_list = document.getElementById("captures-list");
 
     var img = document.createElement("img");
@@ -17,7 +22,7 @@ function onStoreButtonClick(e)
 
     var td_nr = document.createElement("td");
     
-    td_nr.innerHTML = "<span class='capture_nr'>" + (captures_list.childNodes.length + 1) + "</span>";
+    td_nr.innerHTML = "<span class='capture_nr'>" + (captures_list.children.length + 1) + "</span>";
 
     var td_img = document.createElement("td");
     td_img.appendChild(img);
@@ -35,6 +40,7 @@ function onStoreButtonClick(e)
     `;
 
     var tr = document.createElement("tr");
+    tr.addEventListener("click", onSelectImage);
     tr.appendChild(td_nr);
     tr.appendChild(td_img);
     tr.appendChild(td_meta);
@@ -42,6 +48,11 @@ function onStoreButtonClick(e)
     captures_list.prepend(tr);
 
     e.target.disabled = true;
+}
+
+function onSelectImage(e)
+{
+    e.currentTarget.classList.toggle("selected");
 }
 
 async function onDownloadImage(e)

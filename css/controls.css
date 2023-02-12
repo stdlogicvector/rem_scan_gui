@@ -4,6 +4,22 @@
     z-index: 999;
     background: #333;
     padding: 10px 30px;
+	border-style: solid;
+	border-color: #eee;
+}
+
+.bar.top {
+	border-width: 0px 0px 1px 0px;
+}
+
+.bar.bottom {
+	border-width: 1px 0px 0px 0px;
+}
+
+.bar-content {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
 }
 
 .bar.top .bar-content {
@@ -11,4 +27,36 @@
     font-weight: bold;
     color: #eee;
     vertical-align: middle;
+}
+
+#app-title {
+	flex: 0 0 auto;
+}
+
+.progress-box {
+	flex: 0 1 auto;
+	margin: 0 auto;
+	border: 1px solid #ccc!important;
+	display: block;
+	width: 80%;
+}
+
+.progress-bar {
+	/*width: attr(data-value %);*/
+	width: 0%;
+	height: 100%;
+	color: #fff;
+	background-color: #2196F3;
+	text-align: center!important;
+	vertical-align: middle;
+	line-height: 22px;
+}
+
+.progress-bar[data-value="0"]
+{
+	display:none;
+}
+
+.progress-bar:before {
+	content: attr(data-value) '%';
 }

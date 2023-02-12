@@ -1,13 +1,39 @@
-#metadata table {
-	width: 100%;
+#metadata {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	margin: 0px 0px 0px 20px;
 }
 
-#metadata input,
-#metadata textarea
-{
-	float: right;
+.metadata-item {
+	flex: 0 0 auto;
+	float: left;
+	margin: 0px 0px 0px 10px;
+}
+
+.metadata-item label {
+	display: block;
+	color: #eee;
+	font-weight: bold;
+}
+
+.metadata-item input,
+.metadata-item textarea {
+	display: block;
 }
 
 #metadata textarea {
-	resize: vertical;
+	/*resize: vertical;*/
+	resize: none;
+	height: 40px;
+	max-height: 40px;
+}
+
+#capture-subject {
+	width: 150px;
+}
+
+#capture-voltage,
+#capture-magnifi {
+	width: 75px;
 }

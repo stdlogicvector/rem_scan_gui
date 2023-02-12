@@ -26,6 +26,12 @@ textarea {
 	padding: 2px 2px;
 }
 
+input:read-only {
+    border: none;
+	background-color: transparent;
+	color: #fff;
+}
+
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -34,10 +40,14 @@ input::-webkit-inner-spin-button {
 
 button {
 	width: 100px;
-	height: 50px;
+	height: 60px;
+	font-size: 10pt;
+	font-family: 'Courier New', Courier, monospace;
+}
+
+button::first-line {
 	font-weight: bolder;
 	font-size: 12pt;
-	font-family: 'Courier New', Courier, monospace;
 }
 
 label.unit {
@@ -65,9 +75,35 @@ label.unit {
 	flex: 0 1 auto;
 }
 
+/*--------------------------------------------------------------*/
+
 .app-icon {
 	height: 24px;
 	width: 24px;
+}
+
+#app-title {
+	line-height: 24px;
+	padding: 0px 0px 0px 10px;
+}
+
+/*--------------------------------------------------------------*/
+
+#main {
+	display: flex;
+	flex-flow: row;
+	flex-wrap: no-wrap;
+}
+
+#image {
+	flex: 10 0 auto;
+}
+
+#image-canvas {
+	position: absolute;
+	left: 30px;
+	margin: 5px;
+	border: 1px dashed #888;
 }
 
 /*--------------------------------------------------------------*/
@@ -80,61 +116,3 @@ label.unit {
 	width: 300px;
 }
 
-#image {
-    top: 10px;
-    left: 445px;
-}
-
-#image canvas {
-	border: 1px dotted #666;
-}
-
-#image-metadata {
-	display: none;
-}
-
-#image button {
-	width: 100%;
-	height: 30px;
-	font-weight: bolder;
-	font-size: 12pt;
-	font-family: 'Courier New', Courier, monospace;
-	margin-top: 8px;
-}
-
-#register {
-    top: 10px;
-    left: 995px;
-}
-
-#register label
-{
-	font-size: 10pt;
-}
-
-#register input {
-    width: 65px;
-}
-
-#register input:read-only {
-    border: none;
-	background-color: transparent;
-	color: #fff;
-}
-
-.progress-box {
-	margin: 0 auto;
-	border: 1px solid #ccc!important;
-	display: block;
-}
-
-.progress-bar {
-	width: 0%;
-	color: #fff;
-	background-color: #2196F3;
-	text-align: center!important;
-}
-
-.window-footer .progress-box {
-    width: 95%;
-}
