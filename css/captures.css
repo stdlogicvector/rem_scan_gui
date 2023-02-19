@@ -3,6 +3,14 @@
 
 #captures .slideout-content {
     width: 400px;
+	display: flex;
+	flex-flow: column;
+}
+
+#captures-list- {
+	flex: 1;
+    min-height: 0;
+    overflow: auto;
 }
 
 #captures-list {
@@ -28,6 +36,10 @@
 	height: 128px;
 }
 
+#captures-list img[data-unsaved=true] {
+	border: 1px solid red;
+}
+
 #captures-list tr {
 	border-width: 0px 2px 0px 2px;
 	border-style: solid;
@@ -44,4 +56,15 @@
 
 #captures-list tr.selected:hover {
 	border-color: rgb(230, 175, 73) !important;
+}
+
+#captures-controls {
+	display: flex;
+	flex-flow: row;
+	flex-wrap: wrap;
+}
+
+#captures-controls button {
+	flex: 1 0 auto;
+	margin: 10px;
 }

@@ -4,7 +4,6 @@ rem.on(REMevents.CONNECTION_OPENED, onConnectionOpened);
 rem.on(REMevents.CONNECTION_CLOSED, onConnectionClosed);
 rem.on(REMevents.PATTERN_CHANGE, onPatternChange);
 rem.on(REMevents.IMAGE_RECEIVED, onImageReceived);
-rem.on(REMevents.CHUNK_RECEIVED, onChunkReceived);
 rem.on(REMevents.ERROR_OCCURRED, onErrorOccurred);
 
 var capture_metadata = {};
@@ -24,6 +23,20 @@ window.addEventListener("load", (event) =>
 
 });
 
+window.addEventListener("beforeunload", (event) =>
+{
+    event.preventDefault();
+
+    var unstored = document.getElementById("image-canvas").dataset.unstored;
+    var unsaved = unsavedCaptures();
+
+    if (unstored || unsaved.length > 0)
+    {
+        event.returnValue = false;
+        return "You have " + unsaved.length + " unsaved captures.";
+    }
+});
+
 document.addEventListener("keyup", (e) => {
     if (e.ctrlKey && e.altKey && e.key == 'c') {
         document.getElementById("captures").classList.toggle("show");
@@ -32,27 +45,30 @@ document.addEventListener("keyup", (e) => {
         document.getElementById("settings").classList.toggle("show");
     } else
     if (e.altKey && e.key == 'o') {
-        onConnectButtonClick();
+        document.getElementById("connect-button").click();
     } else 
     if (e.altKey && e.key == 'i') {
-        onInitButtonClick();
+        document.getElementById("init-button").click();
     } else 
     if (e.altKey && e.key == 'c') {
-        onScanButtonClick();
+        document.getElementById("scan-button").click();
     } else 
     if (e.altKey && e.key == 'a') {
-        onAbortButtonClick();
+        document.getElementById("abort-button").click();
     } else 
     if (e.altKey && e.key == 's') {
-        onStoreButtonClick();
+        document.getElementById("store-button").click();
+    } else 
+    if (e.altKey && e.key == 'e') {
+        document.getElementById("equalize-button").click();
     } else 
     if (e.altKey && e.key == 't') {
         document.getElementById("capture-subject").focus();
     } 
 });
 
-async function onConnectButtonClick() {
-    await rem.connect();
+async function onConnectButtonClick(select = false) {
+    await rem.connect(select);
 }
 
 async function onInitButtonClick() {
@@ -71,10 +87,17 @@ async function onScanButtonClick() {
     if (scanbutton.disabled == true)
         return;
 
+    if (img_canvas.dataset.stored == "false")
+    {
+        if (!confirm("Last capture was not stored. Overwrite?"))
+            return;
+    }
+
     scanbutton.disabled = true;
     document.getElementById("abort-button").disabled = false;
     document.getElementById("progress-bar").dataset.value = 0;
 
+    img_canvas.dataset.stored = "false";
     img_canvas.width = await rem.getImageWidth();
     img_canvas.height = await rem.getImageHeight();
 
@@ -111,6 +134,15 @@ async function onAbortButtonClick() {
     document.getElementById("scan-button").disabled = false;
 }
 
+function onEqualizeButtonClick()
+{
+    document.getElementById("equalize-button").disabled = true;
+
+    equalizeHistogram(rem.image);
+
+    document.getElementById("store-button").disabled = false;
+}
+
 function onConnectionOpened(eventSender)
 {
     document.getElementById("connect-button").disabled = true;
@@ -127,10 +159,10 @@ function onConnectionClosed(eventSender)
 
 function onErrorOccurred(eventSender, error)
 {
-    var msg = document.getElementById("message");
-    msg.style.display = "block";
+    document.getElementById("message").style.display = "block";
+        
+    document.getElementById("error-message").innerHTML = error.message;
+    document.getElementById("error-stack").innerHTML = error.stack;
     
-    msg.childNodes[3].innerHTML = error;
-
     console.log(error);
 }

@@ -99,11 +99,27 @@ label.unit {
 	flex: 10 0 auto;
 }
 
-#image-canvas {
+#image-container {
 	position: absolute;
 	left: 30px;
+	max-height: 85%;
+	overflow: auto;
+	padding: 0;
 	margin: 5px;
+	box-shadow: #333 5px 5px 10px;
 	border: 1px dashed #888;
+}
+
+#image-canvas {
+	margin: 0px;
+	padding: 0px;
+	min-width: 256px;
+	min-height: 256px;
+	display: block;
+}
+
+canvas#image-canvas {
+	image-rendering: pixelated;
 }
 
 /*--------------------------------------------------------------*/

@@ -11,7 +11,9 @@ const REMregisterMap = [
         {id: 0, name: "Channel 1" },
         {id: 1, name: "8-Bit" },
         {id: 2, name: "Test Image" },
-        {id: 3, name: "Averaging" }
+        {id: 3, name: "Averaging" },
+        {id: 4, name: "Invert" },
+        {id: 5, name: "Shift" }
     ] },
     { use: true, name: "Test Img. Mode", type: "hex", options: [
         {id: 0, name: "RC Lo/Lo" },
@@ -26,7 +28,7 @@ const REMregisterMap = [
     ] },
     { use: true, name: "Averaging Count", type: "unsigned", min: 0, max: 2**8-1 },
     { use: true, name: "Averaging Delay", type: "unsigned", min: 0, max: 2**16-1, unit: "ms", mult: 0.01 },
-    { use: false },
+    { use: true, name: "Shifting Offset",  type: "unsigned", min: 0, max: 2**16-1 },
     { use: false },
     { use: false },
     { use: false },
@@ -41,7 +43,7 @@ const REMregisterMap = [
     { use: false },
     { use: false },
 
-    { use: true,  name: "Ctrl. Delay", type: "unsigned", min: 0, max: 2**16-1, unit: "ms", mult: 0.00256 },
+    { use: true,  name: "Ctrl. Delay", type: "unsigned", min: 0, max: 2**16-1, unit: "ms", mult: 0.01024 },
     { use: true,  name: "Init Delay",  type: "unsigned", min: 0, max: 2**16-1, unit: "us", mult: 0.01 },
     { use: true,  name: "Col. Delay",  type: "unsigned", min: 0, max: 2**16-1, unit: "us", mult: 0.01  },
     { use: true,  name: "Row Delay",   type: "unsigned", min: 0, max: 2**16-1, unit: "us", mult: 0.01  },
@@ -66,7 +68,6 @@ const REMevents = Object.freeze({
     CONNECTION_OPENED: Symbol("Connection opened"),
     CONNECTION_CLOSED: Symbol("Connection closed"),
     IMAGE_RECEIVED: Symbol("New Image received"),
-    CHUNK_RECEIVED: Symbol("New Chunk received"),
     REGISTER_CHANGE: Symbol("Register Value changed"),
     PATTERN_CHANGE: Symbol("Scan Pattern changed"),
     ERROR_OCCURRED: Symbol("An Error occurred")
@@ -81,7 +82,6 @@ class REMinterface {
             REMevents.CONNECTION_OPENED,
             REMevents.CONNECTION_CLOSED,
             REMevents.IMAGE_RECEIVED,
-            REMevents.CHUNK_RECEIVED,
             REMevents.REGISTER_CHANGE,
             REMevents.PATTERN_CHANGE,
             REMevents.ERROR_OCCURRED
@@ -143,31 +143,32 @@ class REMinterface {
         }
     }
 
-    async connect() {
+    async connect(select) {
         const serialOptions = {
             baudRate: 921600,
             dataBits: 8,
             stopBits: 1,
             parity: "none",
             flowControl: "none",
-            bufferSize: 8192
+            bufferSize: 16384
         };
         
-        if (navigator.serial) {
-//            await this.serial.autoConnectAndOpenPreviouslyApprovedPort(serialOptions);
-
-            if (!this.serial.isOpen()) {
-                await this.serial.connectAndOpen(
-                    [{ usbVendorId: 0x0403, usbProductId: 0x6011 }],
-                    serialOptions);
+        if (navigator.serial)
+        {
+            if (!this.serial.isOpen())
+            {
+                if (!select)
+                    await this.serial.autoConnectAndOpenPreviouslyApprovedPort(serialOptions);
+                else
+                    await this.serial.connectAndOpen(
+                        [{ usbVendorId: 0x0403, usbProductId: 0x6011 }],
+                        serialOptions);
             }
-         
-            
         } else {
             alert('The Web Serial API is not supported on this browser.');
         }
     }
-
+  
     connected()
     {
         return this.serial.isOpen();
@@ -259,7 +260,7 @@ class REMinterface {
         await this.readRegister(9);
 
         this.image.count = 0;
-        this.image.data = [];
+        this.image.lastcount = 0;
         this.image.height = this.register[9].val; 
         this.image.width = this.register[8].val;
 
@@ -267,6 +268,14 @@ class REMinterface {
             this.image.depth = 8;
         else
             this.image.depth = 16;
+
+        this.image.size = this.image.width*this.image.height*this.image.depth/8;
+
+        this.image.buffer = new ArrayBuffer(this.image.size);
+        this.image.data8 = new Uint8Array(this.image.buffer);
+        this.image.data16 = new Uint16Array(this.image.buffer);
+
+        this.image.starttime = performance.now();
 
         this.mode = "data";
         this.command("{S}", false);
@@ -447,6 +456,10 @@ class REMinterface {
     }
 
     onSerialClosed(eventSender) {
+        this.register.forEach((r) => {
+            r.inited = false;
+        });
+
         this.fireEvent(REMevents.CONNECTION_CLOSED, eventSender);
     }
 
@@ -458,22 +471,16 @@ class REMinterface {
             this.rx_buffer = responses.pop();
             this.response_buffer = this.response_buffer.concat(responses);
         } else {
-            var tmp = new Uint8Array(this.image.data.length + newData.length);
-            //var tmp = new ArrayBuffer8(this.image.data.length + newData.length);
-
-            tmp.set(this.image.data);
-            tmp.set(newData, this.image.data.length);
-            
-            this.image.data = tmp;
+            this.image.data8.set(newData, this.image.count);
             this.image.count += newData.length;
             
-            this.fireEvent(REMevents.CHUNK_RECEIVED, this.image);
-
-            if (this.image.count >= this.image.height * this.image.width * (this.image.depth/8))
+            if (this.image.count >= this.image.size)
             {
                 this.mode = "cmd";
-                this.fireEvent(REMevents.IMAGE_RECEIVED, this.image);
+                this.image.stoptime = performance.now();
             }
+
+            this.fireEvent(REMevents.IMAGE_RECEIVED, this.image);
         }
     }
 }

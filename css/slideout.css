@@ -40,6 +40,14 @@
 	transform: translateX(0);
 }
 
+.slideout .slideout-tab:hover {
+    width: calc(var(--tab-width) + var(--tab-peek));
+}
+
+.slideout.show .slideout-tab:hover {
+    width: var(--tab-width);
+}
+
 .slideout-tab {
     width: var(--tab-width);
     font-size: 15px;

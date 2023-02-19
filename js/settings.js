@@ -228,8 +228,9 @@ function initRegister()
             col = document.createElement("td");
             var input = document.createElement("input");
             
-            input.type = "number";
+            input.type = "text";
             input.id = "register-" + nr;
+            //input.pattern = "[a-fA-F\d]+";
             input.readOnly = REMregisterMap[nr].readonly && REMregisterMap[nr].readonly == true;
             input.dataset.register = nr;
 
