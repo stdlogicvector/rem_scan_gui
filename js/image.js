@@ -33,14 +33,17 @@ function onImageReceived(eventSender, image)
 
 function displayImage(image)
 {
+    // https://stackoverflow.com/questions/59537492/whats-the-fastest-way-to-draw-an-image-to-the-screen-in-javascript-from-array-o
+    // https://stackoverflow.com/questions/73191734/efficiently-update-a-canvas-with-rgb-or-grayscale-data-but-not-rgba
+
     /*
     ctx.putImageData(
         new ImageData(new Uint8ClampedArray(image.data), ww, hh),
         0, 0,
-        0,  0,
+        0, 0,
         image.width, image.height
     );
-*/
+    */
 
     const png = new IJS.Image(
         image.width,

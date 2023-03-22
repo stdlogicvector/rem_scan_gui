@@ -30,7 +30,7 @@ window.addEventListener("beforeunload", (event) =>
     var unstored = document.getElementById("image-canvas").dataset.unstored;
     var unsaved = unsavedCaptures();
 
-    if (unstored || unsaved.length > 0)
+    if (unstored == "true" || unsaved.length > 0)
     {
         event.returnValue = false;
         return "You have " + unsaved.length + " unsaved captures.";
@@ -49,6 +49,9 @@ document.addEventListener("keyup", (e) => {
     } else 
     if (e.altKey && e.key == 'i') {
         document.getElementById("init-button").click();
+    } else
+    if (e.altKey && e.key == 'l') {
+        document.getElementById("live-button").click();
     } else 
     if (e.altKey && e.key == 'c') {
         document.getElementById("scan-button").click();
@@ -78,6 +81,16 @@ async function onInitButtonClick() {
     await rem.init();
 }
 
+async function onLiveButtonClick() {
+    if (!rem.connected())
+        return;
+
+    document.getElementById("live-button").disabled = true;
+    document.getElementById("abort-button").disabled = false;
+
+    await rem.live();
+}
+
 async function onScanButtonClick() {
     if (!rem.connected())
         return;
@@ -95,6 +108,7 @@ async function onScanButtonClick() {
 
     scanbutton.disabled = true;
     document.getElementById("abort-button").disabled = false;
+    document.getElementById("live-button").disabled = false;
     document.getElementById("progress-bar").dataset.value = 0;
 
     img_canvas.dataset.stored = "false";
@@ -132,6 +146,7 @@ async function onAbortButtonClick() {
 
     document.getElementById("abort-button").disabled = true;
     document.getElementById("scan-button").disabled = false;
+    document.getElementById("live-button").disabled = false;
 }
 
 function onEqualizeButtonClick()
@@ -146,6 +161,7 @@ function onEqualizeButtonClick()
 function onConnectionOpened(eventSender)
 {
     document.getElementById("connect-button").disabled = true;
+    document.getElementById("live-button").disabled = false;
     document.getElementById("scan-button").disabled = false;
     document.getElementById("init-button").disabled = false;
 }
@@ -153,6 +169,7 @@ function onConnectionOpened(eventSender)
 function onConnectionClosed(eventSender)
 {
     document.getElementById("scan-button").disabled = true;
+    document.getElementById("live-button").disabled = true;
     document.getElementById("init-button").disabled = true;
     document.getElementById("connect-button").disabled = false;
 }

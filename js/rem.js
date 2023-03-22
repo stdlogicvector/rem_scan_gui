@@ -13,7 +13,8 @@ const REMregisterMap = [
         {id: 2, name: "Test Image" },
         {id: 3, name: "Averaging" },
         {id: 4, name: "Invert" },
-        {id: 5, name: "Shift" }
+        {id: 5, name: "Shift" },
+        {id: 6, name: "Multiply" }
     ] },
     { use: true, name: "Test Img. Mode", type: "hex", options: [
         {id: 0, name: "RC Lo/Lo" },
@@ -28,8 +29,8 @@ const REMregisterMap = [
     ] },
     { use: true, name: "Averaging Count", type: "unsigned", min: 0, max: 2**8-1 },
     { use: true, name: "Averaging Delay", type: "unsigned", min: 0, max: 2**16-1, unit: "ms", mult: 0.01 },
-    { use: true, name: "Shifting Offset",  type: "unsigned", min: 0, max: 2**16-1 },
-    { use: false },
+    { use: true, name: "Shifting Offset", type: "unsigned", min: 0, max: 2**16-1 },
+    { use: true, name: "Multiply Factor", type: "unsigned", min: 0, max: 2**8-1 },
     { use: false },
     { use: false },
     
@@ -97,6 +98,7 @@ class REMinterface {
         this.serial.on(SerialEvents.ERROR_OCCURRED, this.onSerialError.bind(this));
 
         this.mode = "cmd";
+        this.liveview = false;
         this.textDecoder = new TextDecoder();
         this.rx_buffer = "";
         this.response_buffer = [];
@@ -167,6 +169,10 @@ class REMinterface {
         } else {
             alert('The Web Serial API is not supported on this browser.');
         }
+
+        this.register.forEach((r) => {
+            r.inited = false;
+        });
     }
   
     connected()
@@ -255,6 +261,8 @@ class REMinterface {
         if (!this.serial.isOpen()) 
             return false;
 
+        await this.abort();
+
         await this.readRegister(0);
         await this.readRegister(8);
         await this.readRegister(9);
@@ -281,13 +289,51 @@ class REMinterface {
         this.command("{S}", false);
     }
 
+    async live() {
+        if (!this.serial.isOpen()) 
+            return false;
+
+        this.command("{X}", true);
+
+        await this.readRegister(10);
+        await this.readRegister(11);
+/*
+        if (100 * this.register[10] > 2**16)
+            await this.writeRegister(10, Math.floor(2**16 / 100));
+
+        if (75 * this.register[11] > 2**16)
+            await this.writeRegister(11, Math.floor(2**16 / 75));
+*/
+        this.lastDeltaX = this.register[10].val;
+        this.lastDeltaY = this.register[11].val;
+
+        await this.writeRegister(10, Math.floor((2**16 - 1) /100.0));
+        await this.writeRegister(11, Math.floor((2**16 - 1) / 75.0));
+
+        await this.readRegister(10);
+        await this.readRegister(11);
+
+        await this.command("{L}", true);
+        this.liveview = true;
+    }
+
     async abort()
     {
         if (!this.serial.isOpen()) 
             return false;
 
-        await this.command("{X}", false);
+        await this.command("{X}", this.liveview);
         this.mode = "cmd";
+
+        if (this.liveview)
+        {
+            await this.writeRegister(10, this.lastDeltaX);
+            await this.writeRegister(11, this.lastDeltaY);
+
+            await this.readRegister(10);
+            await this.readRegister(11);
+            this.liveview = false;
+        }
     }
 
     async init()

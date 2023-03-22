@@ -220,6 +220,13 @@
                                 </select></td>
                             </tr>
                             <tr>
+                                <td><label for="digitize-multiply">Multiply Values</label></td>
+                                <td><select id="digitize-shift" data-register="0" data-bits="6">
+                                    <option value="0">0: Not Multiplied</option>
+                                    <option value="1">1: Multiplied</option>
+                                </select></td>
+                            </tr>
+                            <tr>
                                 <td><label for="digitize-resolution">Resolution</label></td>
                                 <td><select id="digitize-resolution" data-register="0" data-bits="1">
                                     <option value="0">16 bit</option>
@@ -265,6 +272,7 @@
                     <div id="controls-buttons">
                         <button id="connect-button" onclick="onConnectButtonClick()" oncontextmenu="onConnectButtonClick(true)">Connect<br>Alt+O</button>
                         <button id="init-button" onclick="onInitButtonClick()" disabled>Init<br>Alt+I</button>
+                        <button id="live-button" onclick="onLiveButtonClick()" disabled>Live<br>Alt+L</button>
                         <button id="scan-button" onclick="onScanButtonClick()" disabled>Capture<br>Alt+C</button>
                         <button id="abort-button" onclick="onAbortButtonClick()" disabled>Abort<br>Alt+A</button>
 						<button id="store-button" onclick="onStoreButtonClick()" disabled>Store<br>Alt+S</button>
