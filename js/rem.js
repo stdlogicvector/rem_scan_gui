@@ -25,7 +25,10 @@ const REMregisterMap = [
         {id: 5, name: "XY Lo/Hi" },
         {id: 6, name: "XY Hi/Lo" },
         {id: 7, name: "XY Hi/Hi" },
-        {id: 8, name: "0x55AA" }
+        {id: 8, name: "X xor Y" },
+		{id: 9, name: "ROW(0)" },
+		{id: 10, name: "COL(0)" },
+		{id: 11, name: "ROW/COL" }
     ] },
     { use: true, name: "Averaging Count", type: "unsigned", min: 0, max: 2**8-1 },
     { use: true, name: "Averaging Delay", type: "unsigned", min: 0, max: 2**16-1, unit: "ms", mult: 0.01 },
@@ -151,7 +154,7 @@ class REMinterface {
             dataBits: 8,
             stopBits: 1,
             parity: "none",
-            flowControl: "none",
+            flowControl: "hardware",
             bufferSize: 16384
         };
         
@@ -195,7 +198,7 @@ class REMinterface {
             {
                 const response = this.response_buffer.pop();
 
-                console.log("Response " + response);
+                console.log("Response", response);
 
                 return response;
             }
@@ -286,6 +289,7 @@ class REMinterface {
         this.image.starttime = performance.now();
 
         this.mode = "data";
+        console.log("DATA");
         this.command("{S}", false);
     }
 
@@ -322,7 +326,7 @@ class REMinterface {
         if (!this.serial.isOpen()) 
             return false;
 
-        await this.command("{X}", this.liveview);
+        await this.command("{X}", true);
         this.mode = "cmd";
 
         if (this.liveview)
@@ -517,11 +521,14 @@ class REMinterface {
             this.rx_buffer = responses.pop();
             this.response_buffer = this.response_buffer.concat(responses);
         } else {
-            this.image.data8.set(newData, this.image.count);
+            if (this.image.count + newData.length <= this.image.size)
+                this.image.data8.set(newData, this.image.count);
+
             this.image.count += newData.length;
             
             if (this.image.count >= this.image.size)
             {
+                console.log("CMD");
                 this.mode = "cmd";
                 this.image.stoptime = performance.now();
             }

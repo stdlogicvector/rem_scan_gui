@@ -267,13 +267,13 @@ const SerialEvents = Object.freeze({
           while (true) {
             const { value, done } = await this.dataReader.read();
 
+            if (value) {
+              this.fireEvent(SerialEvents.DATA_RECEIVED, value);
+            }
+            
             if (done) {
               this.dataReader.releaseLock();
               break;
-            }
-
-            if (value) {
-              this.fireEvent(SerialEvents.DATA_RECEIVED, value);
             }
           }
 
