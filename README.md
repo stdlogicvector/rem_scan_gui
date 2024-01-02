@@ -17,6 +17,8 @@ PCBv2 has external RAM and allows a native resolution of 800x600.
 
 ## GUI Usage
 
+![Screenshot of GUI](screenshot.png)
+
 Open the index.html in a browser that supports WebSerial and click the "Connect" button in the lower left corner.
 
 When you are connecting for the first time, a browser dialog pops up where you can select the device.
